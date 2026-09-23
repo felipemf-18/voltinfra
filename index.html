@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VoltInfra — The Inference Cloud for Dedicated Open Weights</title>
+  <meta name="description" content="Dedicated bare-metal GPU inference endpoints powered by vLLM, PagedAttention, and native INT4 Marlin acceleration. Zero Data Retention." />
+
+  <!-- Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
+          },
+          colors: {
+            brand: {
+              bg: '#050608',
+              surface: '#0b0c10',
+              surfaceHover: '#101218',
+              surfaceCard: 'rgba(13, 15, 20, 0.75)',
+              border: 'rgba(255, 255, 255, 0.08)',
+              borderLight: 'rgba(255, 255, 255, 0.16)',
+              muted: '#71717a',
+              text: '#e4e4e7',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      color-scheme: dark;
+    }
+    body {
+      background-color: #050608;
+      color: #d4d4d8;
+      overflow-x: hidden;
+    }
+    ::selection {
+      background-color: rgba(56, 189, 248, 0.25);
+      color: #ffffff;
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #050608;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1f222e;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #2d3245;
+    }
+
+    /* Parasail-style Ticker Mask */
+    .ticker-fade-mask {
+      mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+      -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    }
+    @keyframes marquee {
+      0% { transform: translateX(0%); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+      display: flex;
+      width: max-content;
+      animation: marquee 35s linear infinite;
+    }
+    .animate-marquee:hover {
+      animation-play-state: paused;
+    }
+
+    /* Ambient Canvas Shader behind Hero */
+    #ambientCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.55;
+      mask-image: radial-gradient(circle at 60% 30%, black 15%, transparent 75%);
+      -webkit-mask-image: radial-gradient(circle at 60% 30%, black 15%, transparent 75%);
+    }
+
+    /* Faint Technical Grid */
+    .bg-tech-grid {
+      background-size: 40px 40px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
+    }
+
+    /* Glow pulse indicators */
+    .glow-dot-emerald {
+      box-shadow: 0 0 6px 1px #10b981;
+    }
+    .glow-dot-cyan {
+      box-shadow: 0 0 6px 1px #38bdf8;
+    }
+    .glow-dot-amber {
+      box-shadow: 0 0 6px 1px #f59e0b;
+    }
+    .glow-dot-indigo {
+      box-shadow: 0 0 6px 1px #818cf8;
+    }
+
+    /* FAQ accordion icon rotation */
+    details summary::-webkit-details-marker {
+      display: none;
+    }
+    details[open] .faq-icon {
+      transform: rotate(45deg);
+    }
+  </style>
+</head>
+<body class="font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-sky-500/20 selection:text-sky-300">
+
+  <!-- ==================== 1. TOP MARQUEE (Parasail style) ==================== -->
+  <aside aria-label="Live System Highlights" class="w-full border-b border-brand-border bg-[#030406] py-2 text-xs font-mono select-none overflow-hidden ticker-fade-mask z-50">
+    <div class="animate-marquee flex items-center gap-10 text-zinc-400">
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+        <span class="text-zinc-200">OpenAI-compatible</span> &bull; <code>/v1/chat/completions</code>
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-sky-400 glow-dot-cyan"></span>
+        <span class="text-zinc-200">p50 ~400ms TTFT</span> (First Token Latency)
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 glow-dot-amber"></span>
+        <span class="text-zinc-200">Stateless ZDR</span> &bull; Zero Disk Storage
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 glow-dot-indigo"></span>
+        <span class="text-zinc-200">vLLM Engine</span> &bull; Native INT4 Marlin GEMM
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+        <span class="text-zinc-200">99.5% Uptime SLA</span>
+      </span>
+
+      <!-- Duplicate loop items -->
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+        <span class="text-zinc-200">OpenAI-compatible</span> &bull; <code>/v1/chat/completions</code>
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-sky-400 glow-dot-cyan"></span>
+        <span class="text-zinc-200">p50 ~400ms TTFT</span> (First Token Latency)
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-amber-400 glow-dot-amber"></span>
+        <span class="text-zinc-200">Stateless ZDR</span> &bull; Zero Disk Storage
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 glow-dot-indigo"></span>
+        <span class="text-zinc-200">vLLM Engine</span> &bull; Native INT4 Marlin GEMM
+      </span>
+      <span class="inline-flex items-center gap-2 whitespace-nowrap">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+        <span class="text-zinc-200">99.5% Uptime SLA</span>
+      </span>
+    </div>
+  </aside>
+
+  <!-- ==================== 2. FLOATING HEADER / NAVBAR ==================== -->
+  <header class="sticky top-0 z-40 w-full border-b border-brand-border bg-[#050608]/85 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3">
+        <a href="#" class="flex items-center gap-2.5 group">
+          <div class="w-7 h-7 rounded-md bg-gradient-to-b from-zinc-800 to-zinc-950 border border-white/10 flex items-center justify-center shadow-inner group-hover:border-sky-400/40 transition-colors">
+            <svg class="w-3.5 h-3.5 text-zinc-200 group-hover:text-sky-300 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+          </div>
+          <span class="font-bold text-sm tracking-tight text-white font-mono flex items-center gap-1">
+            Volt<span class="text-zinc-400 font-sans font-medium">Infra</span>
+          </span>
+        </a>
+        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded border border-white/[0.08] text-zinc-400 bg-white/[0.02]">
+          v1-prod
+        </span>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="hidden md:flex items-center gap-7 text-xs font-mono text-zinc-400">
+        <a href="#models" class="hover:text-white transition-colors">Endpoints</a>
+        <a href="#benchmark" class="hover:text-white transition-colors">Benchmarks</a>
+        <a href="#architecture" class="hover:text-white transition-colors">Architecture</a>
+        <a href="#integration" class="hover:text-white transition-colors">Integration</a>
+        <a href="#zdr" class="hover:text-white transition-colors">Zero Retention</a>
+        <a href="#faq" class="hover:text-white transition-colors">FAQ</a>
+      </nav>
+
+      <!-- Right Header Status & Action Button -->
+      <div class="flex items-center gap-4 text-xs font-mono">
+        <div class="hidden sm:flex items-center gap-2 text-zinc-300 px-2.5 py-1 rounded-full bg-white/[0.03] border border-white/[0.06]">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+          </span>
+          <span class="text-[11px]">All Systems Normal</span>
+        </div>
+
+        <a href="mailto:ops@voltinfra.com" class="inline-flex items-center justify-center px-3.5 py-1.5 text-xs font-mono font-medium rounded-md bg-white text-zinc-950 hover:bg-zinc-200 transition-all shadow-sm">
+          Contact Ops
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== 3. HERO SECTION (Atmospheric Canvas + Typography) ==================== -->
+  <section class="relative overflow-hidden pt-20 pb-20 sm:pt-28 sm:pb-28 border-b border-brand-border">
+    <!-- Kinetic Canvas Mesh (Parasail shader simulation) -->
+    <canvas id="ambientCanvas"></canvas>
+    
+    <!-- Background Grid Pattern -->
+    <div class="absolute inset-0 bg-tech-grid pointer-events-none opacity-60"></div>
+
+    <div class="relative z-10 max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="max-w-3xl space-y-6">
+        
+        <!-- Eyebrow Tag -->
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-mono border border-white/10 bg-white/[0.03] backdrop-blur-md text-zinc-300">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+          <span class="font-medium text-white">Dedicated Bare-Metal Silicon</span>
+          <span class="text-zinc-600">&bull;</span>
+          <span class="text-zinc-400">Pass-Through API</span>
+        </div>
+
+        <!-- Big Display Title -->
+        <h1 class="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-[-0.03em] text-white leading-[1.08]">
+          The Inference Cloud for <br class="hidden sm:inline" />
+          <span class="text-transparent bg-clip-text bg-gradient-to-r from-white via-zinc-200 to-zinc-400">
+            Dedicated Open Weights
+          </span>
+        </h1>
+
+        <!-- Subtitle -->
+        <p class="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl font-normal">
+          OpenAI-compatible inference endpoints powered by containerized vLLM, PagedAttention, and native INT4 Marlin acceleration on isolated silicon with Zero Data Retention.
+        </p>
+
+        <!-- CTA Buttons -->
+        <div class="pt-3 flex flex-wrap items-center gap-3 text-xs font-mono">
+          <a href="#integration" class="inline-flex items-center justify-center px-4 py-2.5 rounded-md font-semibold bg-white text-zinc-950 hover:bg-zinc-200 transition-all shadow-md">
+            API Quickstart &rarr;
+          </a>
+          <a href="#models" class="inline-flex items-center justify-center px-4 py-2.5 rounded-md font-medium border border-white/10 bg-white/[0.04] text-zinc-200 hover:bg-white/[0.08] hover:border-white/20 transition-all">
+            Model Specifications
+          </a>
+          <span class="text-zinc-500 pl-2">
+            Base URL: <code class="text-zinc-300">https://api.voltinfra.com/v1</code>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Telemetry Metric Cards Strip (Parasail Style) -->
+      <div class="mt-16 pt-8 border-t border-brand-border/60 grid grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+          <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-1">Effective Speed</div>
+          <div class="text-2xl font-bold font-mono text-white flex items-baseline gap-1">
+            ~55–65 <span class="text-xs font-normal text-sky-400 font-sans">tok/s</span>
+          </div>
+          <div class="text-[11px] font-mono text-zinc-500 mt-1">Sustained stream generation</div>
+        </div>
+
+        <div class="p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+          <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-1">Time To First Token</div>
+          <div class="text-2xl font-bold font-mono text-white flex items-baseline gap-1">
+            p50 &lt; 420 <span class="text-xs font-normal text-emerald-400 font-sans">ms</span>
+          </div>
+          <div class="text-[11px] font-mono text-zinc-500 mt-1">p95 &lt; 850 ms (edge inclusive)</div>
+        </div>
+
+        <div class="p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+          <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-1">Context Length</div>
+          <div class="text-2xl font-bold font-mono text-white flex items-baseline gap-1">
+            8,192 <span class="text-xs font-normal text-zinc-400 font-sans">tokens</span>
+          </div>
+          <div class="text-[11px] font-mono text-zinc-500 mt-1">PagedAttention v2 dynamic cache</div>
+        </div>
+
+        <div class="p-4 rounded-xl border border-white/[0.08] bg-white/[0.02] backdrop-blur-md">
+          <div class="text-[11px] font-mono text-zinc-500 uppercase tracking-wider mb-1">Data Retention</div>
+          <div class="text-2xl font-bold font-mono text-emerald-400 flex items-baseline gap-1.5">
+            0 Days <span class="text-xs font-normal text-zinc-400 font-sans">Stateless</span>
+          </div>
+          <div class="text-[11px] font-mono text-zinc-500 mt-1">100% Volatile Memory Execution</div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 4. ACTIVE ENDPOINTS & MODEL CARD ==================== -->
+  <section id="models" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+        <div>
+          <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">Production Endpoints</span>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Active Model Deployments</h2>
+        </div>
+        <div class="text-xs font-mono text-zinc-400 flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+          <span>Runtime: vLLM &bull; Continuous Dynamic Batching</span>
+        </div>
+      </div>
+
+      <!-- Featured Model Card (Parasail-grade UI) -->
+      <div class="rounded-2xl border border-white/10 bg-[#090a0f] overflow-hidden shadow-2xl">
+        
+        <!-- Model Card Header -->
+        <div class="px-6 py-4 border-b border-white/[0.08] bg-white/[0.02] flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-3">
+            <span class="w-3 h-3 rounded-full bg-emerald-400 glow-dot-emerald"></span>
+            <div>
+              <h3 class="text-base font-bold text-white font-mono flex items-center gap-2">
+                qwen/qwen3-8b
+                <span class="text-[11px] font-mono font-normal px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Instruct</span>
+              </h3>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs font-mono">
+            <span class="px-2.5 py-1 rounded bg-sky-500/10 border border-sky-500/20 text-sky-300">AWQ INT4 (Marlin)</span>
+            <span class="px-2.5 py-1 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">SLA 99.5%</span>
+          </div>
+        </div>
+
+        <!-- Model Card Body -->
+        <div class="p-6 sm:p-8">
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            
+            <!-- Specs Table Column -->
+            <div class="space-y-3 font-mono text-xs">
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">Base Checkpoint</span>
+                <span class="text-white font-semibold">Qwen3-8B-AWQ (Instruct)</span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">Quantization / Kernel</span>
+                <span class="text-sky-300">AWQ INT4 &bull; Marlin Native GEMM</span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">Context Window</span>
+                <span class="text-white font-semibold">8,192 tokens</span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">KV Cache Management</span>
+                <span class="text-zinc-300">PagedAttention v2 (dynamic allocation)</span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">Serving Engine</span>
+                <span class="text-zinc-300">vLLM containerized runtime</span>
+              </div>
+              <div class="flex justify-between py-2 border-b border-white/[0.06]">
+                <span class="text-zinc-500">Compute Hardware</span>
+                <span class="text-zinc-300">Dedicated Tensor Core Acceleration</span>
+              </div>
+              <div class="flex justify-between py-2">
+                <span class="text-zinc-500">Endpoint Path</span>
+                <span class="text-zinc-200"><code>/v1/chat/completions</code></span>
+              </div>
+            </div>
+
+            <!-- Latency & Health Visualizer Column -->
+            <div class="space-y-4">
+              
+              <div class="p-4 rounded-xl border border-white/[0.08] bg-black/40 space-y-3 font-mono text-xs">
+                <div class="flex justify-between items-center text-zinc-400">
+                  <span>Audited Latency Profile</span>
+                  <span class="text-emerald-400 text-[11px]">1K Token Benchmark</span>
+                </div>
+
+                <div class="space-y-2.5 pt-1">
+                  <div>
+                    <div class="flex justify-between text-[11px] mb-1">
+                      <span class="text-zinc-400">TTFT Median (p50):</span>
+                      <span class="text-white font-bold">~410 ms</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div class="bg-emerald-400 h-full w-[48%] rounded-full"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between text-[11px] mb-1">
+                      <span class="text-zinc-400">TTFT 95th percentile (p95):</span>
+                      <span class="text-white font-bold">&lt; 820 ms</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div class="bg-sky-400 h-full w-[76%] rounded-full"></div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div class="flex justify-between text-[11px] mb-1">
+                      <span class="text-zinc-400">Inter-Token Latency (ITL):</span>
+                      <span class="text-white font-bold">~16 - 19 ms</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                      <div class="bg-indigo-400 h-full w-[26%] rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Health Probe Badge Box -->
+              <div class="p-3.5 rounded-xl border border-white/[0.08] bg-white/[0.02] flex items-center justify-between text-xs font-mono">
+                <span class="text-zinc-400">Health Probe:</span>
+                <span class="text-emerald-400 font-semibold flex items-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  GET /health &rarr; 200 OK (&lt; 5ms)
+                </span>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 5. BENCHMARK CURVE (Parasail Chart Style) ==================== -->
+  <section id="benchmark" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="max-w-2xl mb-12">
+        <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">Performance Benchmarking</span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Throughput Under Concurrent Load</h2>
+        <p class="text-sm text-zinc-400 mt-2">
+          Sustained output token throughput with chunked prefill keeping generation smooth under parallel traffic.
+        </p>
+      </div>
+
+      <!-- Interactive Benchmark Graphic -->
+      <div class="border border-white/10 rounded-2xl p-6 sm:p-8 bg-[#08090d] relative overflow-hidden">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 text-xs font-mono">
+          <div class="p-4 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+            <span class="text-zinc-500 block text-[11px]">Concurrency = 1</span>
+            <span class="text-xl font-bold text-white font-mono">64.2 tok/s</span>
+            <span class="text-[11px] text-zinc-500 block mt-0.5">380ms TTFT</span>
+          </div>
+          <div class="p-4 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+            <span class="text-zinc-500 block text-[11px]">Concurrency = 4</span>
+            <span class="text-xl font-bold text-sky-400 font-mono">61.8 tok/s</span>
+            <span class="text-[11px] text-zinc-500 block mt-0.5">415ms TTFT</span>
+          </div>
+          <div class="p-4 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+            <span class="text-zinc-500 block text-[11px]">Concurrency = 8</span>
+            <span class="text-xl font-bold text-white font-mono">56.5 tok/s</span>
+            <span class="text-[11px] text-zinc-500 block mt-0.5">490ms TTFT</span>
+          </div>
+        </div>
+
+        <!-- SVG Line Chart (Parasail Style) -->
+        <div class="w-full h-48 sm:h-56 relative flex items-end">
+          <svg class="w-full h-full" viewBox="0 0 800 200" fill="none" preserveAspectRatio="none">
+            <!-- Grid Lines -->
+            <line x1="0" y1="40" x2="800" y2="40" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+            <line x1="0" y1="90" x2="800" y2="90" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+            <line x1="0" y1="140" x2="800" y2="140" stroke="rgba(255,255,255,0.05)" stroke-dasharray="4 4" />
+
+            <!-- Gradient Area Fill -->
+            <path d="M 0 50 Q 200 55, 400 68 T 800 95 L 800 200 L 0 200 Z" fill="url(#chartGradient)" opacity="0.35" />
+
+            <!-- Primary Metric Line -->
+            <path d="M 0 50 Q 200 55, 400 68 T 800 95" stroke="#38bdf8" stroke-width="2.5" stroke-linecap="round" />
+
+            <!-- Highlight Nodes -->
+            <circle cx="100" cy="52" r="4.5" fill="#38bdf8" stroke="#08090d" stroke-width="2" />
+            <circle cx="400" cy="68" r="4.5" fill="#38bdf8" stroke="#08090d" stroke-width="2" />
+            <circle cx="700" cy="90" r="4.5" fill="#38bdf8" stroke="#08090d" stroke-width="2" />
+
+            <defs>
+              <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.4" />
+                <stop offset="100%" stop-color="#38bdf8" stop-opacity="0.0" />
+              </linearGradient>
+            </defs>
+          </svg>
+        </div>
+
+        <div class="mt-3 flex justify-between text-[11px] font-mono text-zinc-500 border-t border-white/[0.06] pt-3">
+          <span>0 Concurrent Queries</span>
+          <span>4 Parallel Streams</span>
+          <span>8 Parallel Streams (Continuous Batching Cap)</span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 6. ARCHITECTURE BENTO GRID ==================== -->
+  <section id="architecture" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="max-w-2xl mb-12">
+        <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">Runtime Architecture</span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Engineered for Predictable Low Latency</h2>
+        <p class="text-sm text-zinc-400 mt-2">
+          Eliminating hypervisor tax and resource contention through native bare-metal execution and tuned kernel scheduling.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Card 1 -->
+        <div class="border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col justify-between hover:border-white/20 transition-all group">
+          <div class="space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-xs font-mono text-zinc-300">
+              01
+            </div>
+            <h3 class="text-base font-semibold text-white font-mono">Dedicated Silicon</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Single-tenant host allocation with direct PCI-e GPU device mapping. Zero hypervisor overhead, zero noisy-neighbor VRAM contention.
+            </p>
+          </div>
+          <div class="pt-4 mt-6 border-t border-white/[0.06] text-[11px] font-mono text-zinc-500">
+            Host isolation verified
+          </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col justify-between hover:border-white/20 transition-all group">
+          <div class="space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-xs font-mono text-zinc-300">
+              02
+            </div>
+            <h3 class="text-base font-semibold text-white font-mono">Optimized Prefill</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Chunked prefill dynamically interleaves prompt computation with ongoing token decoding. Eliminates latency spikes on prompts up to 8,192 tokens.
+            </p>
+          </div>
+          <div class="pt-4 mt-6 border-t border-white/[0.06] text-[11px] font-mono text-zinc-500">
+            PagedAttention v2 cache
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="border border-white/10 rounded-2xl p-6 bg-white/[0.02] flex flex-col justify-between hover:border-white/20 transition-all group">
+          <div class="space-y-3">
+            <div class="w-8 h-8 rounded-lg bg-white/[0.04] border border-white/10 flex items-center justify-center text-xs font-mono text-zinc-300">
+              03
+            </div>
+            <h3 class="text-base font-semibold text-white font-mono">Edge Shielding</h3>
+            <p class="text-xs text-zinc-400 leading-relaxed">
+              Perimeter proxying with encrypted reverse tunnels. Direct container routing without public container exposure, backed by L4/L7 DDoS mitigation.
+            </p>
+          </div>
+          <div class="pt-4 mt-6 border-t border-white/[0.06] text-[11px] font-mono text-zinc-500">
+            TLS 1.3 edge termination
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 7. INTEGRATION / TERMINAL (Parasail Style) ==================== -->
+  <section id="integration" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-10 gap-4">
+        <div>
+          <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">API Integration</span>
+          <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Drop-in OpenAI SDK Compatibility</h2>
+        </div>
+        <div class="text-xs font-mono text-zinc-400">
+          Protocol: <code class="text-zinc-200">Server-Sent Events (SSE)</code>
+        </div>
+      </div>
+
+      <div class="border border-white/10 rounded-2xl overflow-hidden bg-[#07080b] shadow-2xl">
+        
+        <!-- Terminal Header Bar -->
+        <div class="px-5 py-3 border-b border-white/[0.08] bg-white/[0.02] flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500/70"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500/70"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500/70"></span>
+            
+            <div class="ml-4 flex items-center gap-2">
+              <button onclick="switchTab('curl')" id="btn-curl" class="px-2.5 py-1 text-xs font-mono rounded bg-white/[0.08] text-white border border-white/10 transition-colors">
+                cURL
+              </button>
+              <button onclick="switchTab('python')" id="btn-python" class="px-2.5 py-1 text-xs font-mono rounded text-zinc-400 hover:text-white transition-colors">
+                Python (OpenAI SDK)
+              </button>
+            </div>
+          </div>
+
+          <button onclick="copyCode()" class="flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-white px-2.5 py-1 rounded border border-white/10 bg-white/[0.02] hover:bg-white/[0.06] transition-colors">
+            <svg id="copyIcon" class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyFeedback">Copy snippet</span>
+          </button>
+        </div>
+
+        <!-- Terminal Body -->
+        <div class="p-6 bg-[#040507] text-xs font-mono leading-relaxed overflow-x-auto">
+          <!-- cURL snippet -->
+          <pre id="code-curl" class="block text-zinc-300"><code><span class="text-sky-400">curl</span> -X POST <span class="text-amber-300">"https://api.voltinfra.com/v1/chat/completions"</span> \
+  -H <span class="text-emerald-400">"Content-Type: application/json"</span> \
+  -H <span class="text-emerald-400">"Authorization: Bearer $VOLT_API_KEY"</span> \
+  -d <span class="text-zinc-400">'{
+    "model": "qwen/qwen3-8b",
+    "messages": [
+      { "role": "system", "content": "You are a low-latency systems engineer." },
+      { "role": "user", "content": "Return the optimal batch configuration parameters." }
+    ],
+    "temperature": 0.2,
+    "max_tokens": 256,
+    "stream": true
+  }'</span></code></pre>
+
+          <!-- Python snippet -->
+          <pre id="code-python" class="hidden text-zinc-300"><code><span class="text-indigo-400">from</span> openai <span class="text-indigo-400">import</span> OpenAI
+
+client = OpenAI(
+    base_url=<span class="text-amber-300">"https://api.voltinfra.com/v1"</span>,
+    api_key=<span class="text-amber-300">"your-api-key"</span>
+)
+
+response = client.chat.completions.create(
+    model=<span class="text-amber-300">"qwen/qwen3-8b"</span>,
+    messages=[
+        {<span class="text-emerald-400">"role"</span>: <span class="text-emerald-400">"user"</span>, <span class="text-emerald-400">"content"</span>: <span class="text-emerald-400">"Ping VoltInfra endpoint"</span>}
+    ],
+    temperature=0.2,
+    max_tokens=256,
+    stream=<span class="text-sky-400">True</span>
+)
+
+<span class="text-indigo-400">for</span> chunk <span class="text-indigo-400">in</span> response:
+    content = chunk.choices[0].delta.content
+    <span class="text-indigo-400">if</span> content:
+        print(content, end=<span class="text-amber-300">""</span>, flush=<span class="text-sky-400">True</span>)</code></pre>
+        </div>
+
+        <!-- Terminal Footer Bar -->
+        <div class="px-5 py-2.5 border-t border-white/[0.06] bg-white/[0.01] text-[11px] font-mono text-zinc-500 flex items-center justify-between">
+          <span>Stream Chunk Format: <code class="text-zinc-400">data: {"choices":[{"delta":{...}}]}</code></span>
+          <span>Termination: <code class="text-zinc-400">data: [DONE]</code></span>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 8. ZERO DATA RETENTION (ZDR) ==================== -->
+  <section id="zdr" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="max-w-3xl mb-10">
+        <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">Data Sovereignty</span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Zero Data Retention (ZDR) Commitment</h2>
+        <p class="text-sm text-zinc-400 mt-2">
+          VoltInfra operates strict stateless pass-through inference. Prompts, completions, and token payloads are processed exclusively in volatile memory and instantly evicted post-stream. No input or output data is logged to non-volatile storage, cached, or used for model training under any circumstances.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        
+        <div class="border border-white/10 rounded-xl p-5 bg-white/[0.02]">
+          <span class="text-sm font-semibold text-white font-mono block mb-2">100% Volatile Execution</span>
+          <p class="text-xs text-zinc-400 leading-relaxed font-mono">
+            KV cache tensors and model activations reside solely in volatile memory and are purged immediately upon connection termination.
+          </p>
+        </div>
+
+        <div class="border border-white/10 rounded-xl p-5 bg-white/[0.02]">
+          <span class="text-sm font-semibold text-white font-mono block mb-2">Zero Non-Volatile Logs</span>
+          <p class="text-xs text-zinc-400 leading-relaxed font-mono">
+            Prompt logging is disabled in the serving runtime. No customer query payloads are written to SSDs, disks, databases, or object storage.
+          </p>
+        </div>
+
+        <div class="border border-white/10 rounded-xl p-5 bg-white/[0.02]">
+          <span class="text-sm font-semibold text-white font-mono block mb-2">Zero Model Re-Training</span>
+          <p class="text-xs text-zinc-400 leading-relaxed font-mono">
+            User inputs and completions are never aggregated, pooled, or utilized for model fine-tuning, training datasets, or evaluation.
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 9. FREQUENTLY ASKED QUESTIONS (Parasail Style) ==================== -->
+  <section id="faq" class="py-20 border-b border-brand-border scroll-mt-16">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6">
+      
+      <div class="max-w-2xl mb-12">
+        <span class="text-xs font-mono text-zinc-500 uppercase tracking-wider block mb-1">Frequently Asked Questions</span>
+        <h2 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Questions & Answers</h2>
+      </div>
+
+      <div class="divide-y divide-white/[0.08] border border-white/10 rounded-2xl overflow-hidden bg-white/[0.01]">
+        
+        <details class="group p-6 cursor-pointer">
+          <summary class="flex items-center justify-between font-semibold text-sm text-white list-none">
+            <span>Is VoltInfra drop-in compatible with the official OpenAI SDKs?</span>
+            <span class="faq-icon text-zinc-400 transition-transform text-lg">&plus;</span>
+          </summary>
+          <p class="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+            Yes. Point <code class="text-zinc-200">base_url</code> to <code class="text-zinc-200">https://api.voltinfra.com/v1</code> and use <code class="text-zinc-200">model: "qwen/qwen3-8b"</code>. All standard parameters such as <code class="text-zinc-200">stream</code>, <code class="text-zinc-200">temperature</code>, <code class="text-zinc-200">max_tokens</code>, and tool use formats work out of the box.
+          </p>
+        </details>
+
+        <details class="group p-6 cursor-pointer">
+          <summary class="flex items-center justify-between font-semibold text-sm text-white list-none">
+            <span>How is Zero Data Retention enforced technically?</span>
+            <span class="faq-icon text-zinc-400 transition-transform text-lg">&plus;</span>
+          </summary>
+          <p class="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+            Our containerized inference runtimes run without persistent volume mounts for logs. Payload logging flags are permanently disabled, and the reverse proxy routes requests via memory streams directly to the CUDA engine.
+          </p>
+        </details>
+
+        <details class="group p-6 cursor-pointer">
+          <summary class="flex items-center justify-between font-semibold text-sm text-white list-none">
+            <span>What latency and throughput can we expect on production workloads?</span>
+            <span class="faq-icon text-zinc-400 transition-transform text-lg">&plus;</span>
+          </summary>
+          <p class="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+            For typical conversational prompts (500–1000 input tokens), median Time To First Token (TTFT) is ~380–420 ms. Sustained generation throughput ranges from ~55 to 65 tokens per second with AWQ INT4 Marlin kernels.
+          </p>
+        </details>
+
+        <details class="group p-6 cursor-pointer">
+          <summary class="flex items-center justify-between font-semibold text-sm text-white list-none">
+            <span>How do compute aggregators (like OpenRouter) audit our endpoints?</span>
+            <span class="faq-icon text-zinc-400 transition-transform text-lg">&plus;</span>
+          </summary>
+          <p class="mt-3 text-xs sm:text-sm text-zinc-400 leading-relaxed font-normal">
+            Aggregators can run standard synthetic benchmark suites directly against our endpoints. We provide dedicated sandbox keys and audit telemetry upon request via <a href="mailto:ops@voltinfra.com" class="text-white underline">ops@voltinfra.com</a>.
+          </p>
+        </details>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ==================== 10. FOOTER ==================== -->
+  <footer class="border-t border-brand-border bg-[#030406] py-10 relative z-10">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-xs font-mono text-zinc-500">
+      
+      <div class="flex items-center gap-3">
+        <span class="font-bold text-white font-mono">VoltInfra Systems</span>
+        <span>&bull;</span>
+        <span>SLA 99.5% Target</span>
+      </div>
+
+      <div class="flex items-center gap-6">
+        <span>Operations: <a href="mailto:ops@voltinfra.com" class="text-zinc-300 hover:text-white transition-colors">ops@voltinfra.com</a></span>
+        <span>Base URL: <code class="text-zinc-400">api.voltinfra.com</code></span>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==================== INTERACTIVE SCRIPTS ==================== -->
+  <script>
+    // Tab switching in Terminal
+    let currentTab = 'curl';
+    const btnCurl = document.getElementById('btn-curl');
+    const btnPython = document.getElementById('btn-python');
+    const codeCurl = document.getElementById('code-curl');
+    const codePython = document.getElementById('code-python');
+
+    function switchTab(tab) {
+      currentTab = tab;
+      if (tab === 'curl') {
+        btnCurl.className = 'px-2.5 py-1 text-xs font-mono rounded bg-white/[0.08] text-white border border-white/10 transition-colors';
+        btnPython.className = 'px-2.5 py-1 text-xs font-mono rounded text-zinc-400 hover:text-white transition-colors';
+        codeCurl.classList.remove('hidden');
+        codePython.classList.add('hidden');
+      } else {
+        btnPython.className = 'px-2.5 py-1 text-xs font-mono rounded bg-white/[0.08] text-white border border-white/10 transition-colors';
+        btnCurl.className = 'px-2.5 py-1 text-xs font-mono rounded text-zinc-400 hover:text-white transition-colors';
+        codePython.classList.remove('hidden');
+        codeCurl.classList.add('hidden');
+      }
+    }
+
+    // Copy to clipboard
+    function copyCode() {
+      const codeText = currentTab === 'curl' ? codeCurl.innerText : codePython.innerText;
+      navigator.clipboard.writeText(codeText).then(() => {
+        const feedback = document.getElementById('copyFeedback');
+        const prev = feedback.innerText;
+        feedback.innerText = 'Copied!';
+        feedback.classList.add('text-emerald-400');
+        setTimeout(() => {
+          feedback.innerText = prev;
+          feedback.classList.remove('text-emerald-400');
+        }, 1800);
+      });
+    }
+
+    // Ambient Kinetic Canvas Shader Simulation (Parasail style)
+    const canvas = document.getElementById('ambientCanvas');
+    if (canvas) {
+      const ctx = canvas.getContext('2d');
+      let width, height;
+      let time = 0;
+
+      function resize() {
+        width = canvas.width = canvas.offsetWidth;
+        height = canvas.height = canvas.offsetHeight;
+      }
+      window.addEventListener('resize', resize);
+      resize();
+
+      function draw() {
+        time += 0.006;
+        ctx.clearRect(0, 0, width, height);
+
+        // Organic light blob 1 (Teal/Emerald)
+        const x1 = width * 0.65 + Math.cos(time * 0.8) * 90;
+        const y1 = height * 0.4 + Math.sin(time * 0.6) * 60;
+        const grad1 = ctx.createRadialGradient(x1, y1, 10, x1, y1, width * 0.45);
+        grad1.addColorStop(0, 'rgba(6, 224, 192, 0.18)');
+        grad1.addColorStop(0.5, 'rgba(6, 224, 192, 0.04)');
+        grad1.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad1;
+        ctx.fillRect(0, 0, width, height);
+
+        // Organic light blob 2 (Indigo/Sky)
+        const x2 = width * 0.45 + Math.sin(time * 0.5) * 110;
+        const y2 = height * 0.55 + Math.cos(time * 0.7) * 70;
+        const grad2 = ctx.createRadialGradient(x2, y2, 20, x2, y2, width * 0.5);
+        grad2.addColorStop(0, 'rgba(56, 189, 248, 0.16)');
+        grad2.addColorStop(0.6, 'rgba(99, 102, 241, 0.05)');
+        grad2.addColorStop(1, 'transparent');
+        ctx.fillStyle = grad2;
+        ctx.fillRect(0, 0, width, height);
+
+        requestAnimationFrame(draw);
+      }
+      draw();
+    }
+  </script>
+</body>
+</html>
