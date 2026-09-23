@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoltInfra — Low-Latency OpenAI-Compatible Inference</title>
-  <meta name="description" content="Low-Latency OpenAI-Compatible Inference. Direct, unmetered endpoints with Zero Data Retention." />
+  <title>VoltInfra — High-Throughput OpenAI-Compatible Inference</title>
+  <meta name="description" content="Direct, unmetered endpoints optimized for low latency and zero data retention." />
 
   <!-- Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,22 +12,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
-    /* CSS Variables & Reset */
+    /* ==========================================================================
+       VoltInfra Design System (Developer-First, Dark Mode)
+       ========================================================================== */
     :root {
-      --bg: #0a0b0e;
-      --surface: #111318;
-      --surface-hover: #151820;
-      --surface-code: #08090c;
-      --border: #1e2028;
-      --border-hover: #2b2e3b;
+      --bg: #0b0c0e;
+      --surface: #111216;
+      --surface-subtle: #14161c;
+      --surface-code: #08080a;
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.16);
       --text: #f4f4f5;
       --text-muted: #9ca3af;
       --text-dim: #6b7280;
-      --green: #10b981;
-      --green-bg: rgba(16, 185, 129, 0.1);
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
-      --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      --max-width: 960px;
+      --emerald: #10b981;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --container-max: 880px;
     }
 
     * {
@@ -57,7 +59,7 @@
     a {
       color: inherit;
       text-decoration: none;
-      transition: color 0.15s ease;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
 
     code, pre {
@@ -65,16 +67,18 @@
     }
 
     .container {
-      max-width: var(--max-width);
+      max-width: var(--container-max);
       margin: 0 auto;
-      padding: 0 20px;
+      padding: 0 24px;
       width: 100%;
     }
 
-    /* Header */
+    /* ==========================================================================
+       Header
+       ========================================================================== */
     header {
       border-bottom: 1px solid var(--border);
-      background-color: rgba(10, 11, 14, 0.85);
+      background-color: rgba(11, 12, 14, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       position: sticky;
@@ -83,7 +87,7 @@
     }
 
     .header-inner {
-      height: 56px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -92,31 +96,31 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-family: var(--font-mono);
+      gap: 8px;
+    }
+
+    .brand-logo {
+      font-size: 15px;
       font-weight: 700;
-      font-size: 14px;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
       color: var(--text);
     }
 
-    .brand-mark {
-      width: 18px;
-      height: 18px;
-      background-color: var(--text);
-      color: var(--bg);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 3px;
-      font-size: 11px;
-      font-weight: 800;
+    .brand-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      font-weight: 500;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      background-color: var(--surface);
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 20px;
+      gap: 24px;
       font-size: 13px;
       color: var(--text-muted);
     }
@@ -125,67 +129,86 @@
       color: var(--text);
     }
 
-    .status-pill {
+    .status-badge {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
       font-family: var(--font-mono);
       font-size: 11px;
-      padding: 4px 10px;
+      font-weight: 500;
+      padding: 5px 12px;
       border-radius: 9999px;
       background-color: var(--surface);
       border: 1px solid var(--border);
-      color: var(--text-muted);
+      color: var(--text);
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
-      background-color: var(--green);
-      display: inline-block;
-      box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+      background-color: var(--emerald);
+      position: relative;
     }
 
-    /* Hero Section */
+    .status-dot::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background-color: var(--emerald);
+      opacity: 0.4;
+      animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(0.95); opacity: 0; }
+    }
+
+    /* ==========================================================================
+       Hero Section
+       ========================================================================== */
     .hero {
-      padding: 64px 0 48px;
+      padding: 72px 0 48px;
     }
 
     .hero-title {
-      font-size: 32px;
-      line-height: 1.25;
+      font-size: 34px;
+      line-height: 1.2;
       font-weight: 700;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.03em;
       color: var(--text);
-      margin-bottom: 12px;
-      max-width: 680px;
+      margin-bottom: 16px;
+      max-width: 720px;
     }
 
-    .hero-description {
-      font-size: 15px;
+    .hero-subtitle {
+      font-size: 16px;
       line-height: 1.6;
       color: var(--text-muted);
-      max-width: 620px;
-      margin-bottom: 24px;
+      max-width: 640px;
+      margin-bottom: 28px;
+      font-weight: 400;
     }
 
     .hero-actions {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 12px;
-      font-size: 13px;
     }
 
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 8px 16px;
-      border-radius: 4px;
-      font-weight: 500;
+      padding: 9px 18px;
+      border-radius: 5px;
+      font-size: 13px;
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-weight: 500;
       cursor: pointer;
       transition: all 0.15s ease;
       border: 1px solid transparent;
@@ -198,7 +221,8 @@
     }
 
     .btn-primary:hover {
-      background-color: #e4e4e7;
+      background-color: #ffffff;
+      border-color: #ffffff;
     }
 
     .btn-secondary {
@@ -208,60 +232,67 @@
     }
 
     .btn-secondary:hover {
-      background-color: var(--surface-hover);
+      background-color: var(--surface-subtle);
       border-color: var(--border-hover);
     }
 
-    .endpoint-tag {
+    .endpoint-pill {
       font-family: var(--font-mono);
       font-size: 12px;
       color: var(--text-dim);
-      margin-left: 8px;
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
     }
 
-    .endpoint-tag span {
+    .endpoint-pill code {
       color: var(--text-muted);
     }
 
-    /* Section Layout */
+    /* ==========================================================================
+       Section Styling
+       ========================================================================== */
     .section {
-      padding: 36px 0;
+      padding: 48px 0;
       border-top: 1px solid var(--border);
     }
 
     .section-header {
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
 
     .section-title {
-      font-size: 13px;
       font-family: var(--font-mono);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-muted);
+      font-size: 12px;
       font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
     }
 
-    /* Interactive Code Block */
-    .code-box {
+    /* ==========================================================================
+       Code Block Component
+       ========================================================================== */
+    .code-container {
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       background-color: var(--surface-code);
       overflow: hidden;
     }
 
-    .code-nav {
+    .code-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 12px;
+      padding: 8px 14px;
       border-bottom: 1px solid var(--border);
       background-color: var(--surface);
     }
 
     .code-tabs {
       display: flex;
-      gap: 4px;
+      gap: 6px;
     }
 
     .code-tab {
@@ -290,10 +321,10 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 8px;
+      padding: 4px 10px;
       font-family: var(--font-mono);
       font-size: 11px;
-      background-color: var(--surface);
+      background-color: var(--surface-code);
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--text-muted);
@@ -306,30 +337,35 @@
       border-color: var(--border-hover);
     }
 
-    .code-content {
-      padding: 16px;
+    .btn-copy.copied {
+      color: var(--emerald);
+      border-color: var(--emerald);
+    }
+
+    .code-body {
+      padding: 18px 20px;
       overflow-x: auto;
       font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.65;
+      font-size: 12.5px;
+      line-height: 1.7;
       color: #e4e4e7;
     }
 
-    .code-content pre {
+    .code-body pre {
       margin: 0;
       white-space: pre;
     }
 
-    .token-method { color: #38bdf8; }
-    .token-url { color: #fef08a; }
-    .token-header { color: #34d399; }
-    .token-keyword { color: #c084fc; }
-    .token-comment { color: #6b7280; }
+    /* Syntax Highlighting */
+    .hl-cmd { color: #38bdf8; }
+    .hl-str { color: #fef08a; }
+    .hl-hdr { color: #34d399; }
+    .hl-kw { color: #c084fc; }
 
-    .code-footer {
-      padding: 6px 16px;
+    .code-statusbar {
+      padding: 8px 16px;
       border-top: 1px solid var(--border);
-      background-color: rgba(10, 11, 14, 0.5);
+      background-color: rgba(11, 12, 14, 0.6);
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--text-dim);
@@ -337,10 +373,12 @@
       justify-content: space-between;
     }
 
-    /* Specifications Table */
-    .specs-table-wrapper {
+    /* ==========================================================================
+       Specifications Table
+       ========================================================================== */
+    .table-container {
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       overflow: hidden;
       background-color: var(--surface);
     }
@@ -349,7 +387,7 @@
       width: 100%;
       border-collapse: collapse;
       text-align: left;
-      font-size: 12px;
+      font-size: 12.5px;
       font-family: var(--font-mono);
     }
 
@@ -363,95 +401,100 @@
     }
 
     .specs-table tr:hover {
-      background-color: var(--surface-hover);
+      background-color: var(--surface-subtle);
     }
 
     .specs-table td {
-      padding: 10px 16px;
+      padding: 12px 18px;
     }
 
-    .specs-key {
+    .specs-label {
       color: var(--text-muted);
-      width: 220px;
+      width: 200px;
       font-weight: 500;
     }
 
-    .specs-val {
+    .specs-value {
       color: var(--text);
     }
 
-    .specs-badge {
+    .specs-tag {
       display: inline-block;
-      padding: 1px 6px;
-      border-radius: 3px;
+      padding: 2px 7px;
+      border-radius: 4px;
       font-size: 11px;
-      background-color: rgba(255, 255, 255, 0.06);
+      background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text);
-      margin-left: 6px;
+      margin-left: 8px;
     }
 
-    .specs-live {
-      color: var(--green);
+    .specs-highlight {
+      color: var(--emerald);
     }
 
-    /* Zero Data Retention Block */
+    /* ==========================================================================
+       Zero Data Retention Card
+       ========================================================================== */
     .zdr-card {
       border: 1px solid var(--border);
-      border-radius: 6px;
+      border-radius: 8px;
       background-color: var(--surface);
-      padding: 24px;
+      padding: 28px;
     }
 
-    .zdr-header {
-      display: flex;
+    .zdr-badge {
+      display: inline-flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 6px;
       font-family: var(--font-mono);
       font-size: 12px;
       font-weight: 600;
-      color: var(--green);
+      color: var(--emerald);
+      margin-bottom: 12px;
     }
 
-    .zdr-text {
-      font-size: 14px;
-      line-height: 1.6;
+    .zdr-statement {
+      font-size: 14.5px;
+      line-height: 1.65;
       color: var(--text);
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      max-width: 760px;
     }
 
     .zdr-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
     }
 
-    .zdr-item {
+    .zdr-pillar {
       background-color: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 12px 14px;
+      border-radius: 6px;
+      padding: 14px 16px;
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 11.5px;
     }
 
-    .zdr-item-title {
+    .zdr-pillar-title {
       color: var(--text);
       font-weight: 600;
-      margin-bottom: 4px;
+      margin-bottom: 6px;
     }
 
-    .zdr-item-desc {
+    .zdr-pillar-text {
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
-    /* Footer */
+    /* ==========================================================================
+       Footer
+       ========================================================================== */
     footer {
       border-top: 1px solid var(--border);
-      padding: 28px 0;
-      margin-top: 48px;
+      padding: 32px 0;
+      margin-top: 56px;
       font-family: var(--font-mono);
       font-size: 12px;
       color: var(--text-dim);
@@ -468,7 +511,7 @@
     .footer-links {
       display: flex;
       align-items: center;
-      gap: 18px;
+      gap: 20px;
     }
 
     .footer-links a {
@@ -479,13 +522,21 @@
       color: var(--text);
     }
 
-    /* Responsive */
-    @media (max-width: 640px) {
-      .hero-title {
-        font-size: 24px;
+    /* ==========================================================================
+       Responsive Adjustments
+       ========================================================================== */
+    @media (max-width: 680px) {
+      .hero {
+        padding: 48px 0 36px;
       }
-      .specs-key {
-        width: 140px;
+      .hero-title {
+        font-size: 26px;
+      }
+      .hero-subtitle {
+        font-size: 14.5px;
+      }
+      .specs-label {
+        width: 130px;
       }
       .nav-links {
         display: none;
@@ -494,89 +545,88 @@
         flex-direction: column;
         align-items: flex-start;
       }
-      .endpoint-tag {
-        margin-left: 0;
-        margin-top: 4px;
+      .endpoint-pill {
+        width: 100%;
       }
     }
   </style>
 </head>
 <body>
 
-  <!-- ==================== HEADER ==================== -->
+  <!-- ==================== 1. HEADER ==================== -->
   <header>
     <div class="container header-inner">
       <div class="brand">
-        <div class="brand-mark">&gt;</div>
-        <span>VoltInfra</span>
+        <a href="#" class="brand-logo">VoltInfra</a>
+        <span class="brand-tag">v1.0</span>
       </div>
 
       <nav class="nav-links">
-        <a href="#code">API</a>
-        <a href="#models">Models</a>
-        <a href="#zdr">Privacy</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="#specs">Specifications</a>
+        <a href="#zdr">Data Privacy</a>
         <a href="mailto:ops@voltinfra.xyz">Support</a>
       </nav>
 
-      <div class="status-pill">
+      <div class="status-badge">
         <span class="status-dot"></span>
-        <span>All Systems Operational</span>
+        <span>Systems Operational</span>
       </div>
     </div>
   </header>
 
-  <!-- ==================== MAIN CONTENT ==================== -->
+  <!-- ==================== 2. MAIN CONTAINER ==================== -->
   <main class="container">
 
-    <!-- Hero -->
+    <!-- Hero Section -->
     <section class="hero">
       <h1 class="hero-title">
-        Low-Latency OpenAI-Compatible Inference. Direct, unmetered endpoints with Zero Data Retention.
+        High-Throughput OpenAI-Compatible Inference.
       </h1>
-      <p class="hero-description">
-        Containerized vLLM serving quantized open-weights models on dedicated hardware. Deterministic throughput, sub-second first-token latency, and fully stateless memory execution.
+      <p class="hero-subtitle">
+        Direct, unmetered endpoints optimized for low latency and zero data retention.
       </p>
 
       <div class="hero-actions">
-        <a href="#code" class="btn btn-primary">Explore API</a>
-        <a href="#models" class="btn btn-secondary">View Models</a>
-        <div class="endpoint-tag">
-          Base URL: <span>https://api.voltinfra.xyz/v1</span>
+        <a href="#quickstart" class="btn btn-primary">Explore API</a>
+        <a href="#specs" class="btn btn-secondary">View Models</a>
+        <div class="endpoint-pill">
+          Endpoint: <code>https://api.voltinfra.xyz/v1/chat/completions</code>
         </div>
       </div>
     </section>
 
     <!-- Code Block Interactivo -->
-    <section id="code" class="section">
+    <section id="quickstart" class="section">
       <div class="section-header">
-        <h2 class="section-title">Integration & Quickstart</h2>
+        <h2 class="section-title">Quickstart Integration</h2>
       </div>
 
-      <div class="code-box">
-        <div class="code-nav">
+      <div class="code-container">
+        <div class="code-toolbar">
           <div class="code-tabs">
-            <button class="code-tab active" id="tab-curl" onclick="switchSnippet('curl')">cURL</button>
-            <button class="code-tab" id="tab-python" onclick="switchSnippet('python')">Python (OpenAI SDK)</button>
+            <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
+            <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
           </div>
-          <button class="btn-copy" id="btnCopy" onclick="copyActiveCode()">
+          <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
               <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
             </svg>
-            <span id="copyText">Copy</span>
+            <span id="copyFeedback">Copy</span>
           </button>
         </div>
 
-        <div class="code-content">
+        <div class="code-body">
           <!-- cURL snippet -->
-          <pre id="snippet-curl"><code><span class="token-method">curl</span> -X POST <span class="token-url">"https://api.voltinfra.xyz/v1/chat/completions"</span> \
-  -H <span class="token-header">"Content-Type: application/json"</span> \
-  -H <span class="token-header">"Authorization: Bearer $VOLT_API_KEY"</span> \
+          <pre id="code-curl"><code><span class="hl-cmd">curl</span> -X POST <span class="hl-str">"https://api.voltinfra.xyz/v1/chat/completions"</span> \
+  -H <span class="hl-hdr">"Content-Type: application/json"</span> \
+  -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
   -d '{
-    "model": "qwen/qwen2.5-8b",
+    "model": "Qwen/Qwen2.5-8B-Instruct",
     "messages": [
-      { "role": "system", "content": "You are a concise systems engineer." },
-      { "role": "user", "content": "Return benchmark parameters in JSON." }
+      { "role": "system", "content": "You are a low-latency systems assistant." },
+      { "role": "user", "content": "Return the cluster health spec in JSON." }
     ],
     "temperature": 0.2,
     "max_tokens": 512,
@@ -584,80 +634,79 @@
   }'</code></pre>
 
           <!-- Python snippet -->
-          <pre id="snippet-python" style="display: none;"><code><span class="token-keyword">from</span> openai <span class="token-keyword">import</span> OpenAI
+          <pre id="code-python" style="display: none;"><code><span class="hl-kw">from</span> openai <span class="hl-kw">import</span> OpenAI
 
 client = OpenAI(
-    base_url=<span class="token-url">"https://api.voltinfra.xyz/v1"</span>,
-    api_key=<span class="token-url">"sk-volt-..."</span>
+    base_url=<span class="hl-str">"https://api.voltinfra.xyz/v1"</span>,
+    api_key=<span class="hl-str">"sk-volt-..."</span>
 )
 
 stream = client.chat.completions.create(
-    model=<span class="token-url">"qwen/qwen2.5-8b"</span>,
+    model=<span class="hl-str">"Qwen/Qwen2.5-8B-Instruct"</span>,
     messages=[
-        {<span class="token-header">"role"</span>: <span class="token-header">"user"</span>, <span class="token-header">"content"</span>: <span class="token-header">"Ping inference endpoint"</span>}
+        {<span class="hl-hdr">"role"</span>: <span class="hl-hdr">"user"</span>, <span class="hl-hdr">"content"</span>: <span class="hl-hdr">"Ping inference endpoint"</span>}
     ],
     temperature=0.2,
     max_tokens=512,
-    stream=<span class="token-keyword">True</span>
+    stream=<span class="hl-kw">True</span>
 )
 
-<span class="token-keyword">for</span> chunk <span class="token-keyword">in</span> stream:
+<span class="hl-kw">for</span> chunk <span class="hl-kw">in</span> stream:
     token = chunk.choices[0].delta.content
-    <span class="token-keyword">if</span> token:
-        print(token, end=<span class="token-url">""</span>, flush=<span class="token-keyword">True</span>)</code></pre>
+    <span class="hl-kw">if</span> token:
+        print(token, end=<span class="hl-str">""</span>, flush=<span class="hl-kw">True</span>)</code></pre>
         </div>
 
-        <div class="code-footer">
+        <div class="code-statusbar">
           <span>Protocol: text/event-stream</span>
-          <span>OpenAI Spec 1.0 Compatible</span>
+          <span>Response Format: OpenAI Chat Completions v1</span>
         </div>
       </div>
     </section>
 
-    <!-- Especificaciones y Modelos -->
-    <section id="models" class="section">
+    <!-- Especificaciones Técnicas (Métricas Duras) -->
+    <section id="specs" class="section">
       <div class="section-header">
-        <h2 class="section-title">Available Models & Specifications</h2>
+        <h2 class="section-title">Technical Specifications</h2>
       </div>
 
-      <div class="specs-table-wrapper">
+      <div class="table-container">
         <table class="specs-table">
           <tbody>
             <tr>
-              <td class="specs-key">Active Model</td>
-              <td class="specs-val">
-                <strong>Qwen 2.5 8B</strong>
-                <span class="specs-badge">Instruct</span>
-                <span class="specs-badge">qwen/qwen2.5-8b</span>
+              <td class="specs-label">Model ID</td>
+              <td class="specs-value">
+                <strong>Qwen/Qwen2.5-8B-Instruct</strong>
+                <span class="specs-tag">qwen/qwen2.5-8b</span>
               </td>
             </tr>
             <tr>
-              <td class="specs-key">Context Window</td>
-              <td class="specs-val">32,768 tokens (PagedAttention dynamic allocation)</td>
+              <td class="specs-label">Context Window</td>
+              <td class="specs-value">32,768 tokens (PagedAttention dynamic allocation)</td>
             </tr>
             <tr>
-              <td class="specs-key">Quantization / Format</td>
-              <td class="specs-val">AWQ / INT4 (Native Marlin GEMM Kernel)</td>
+              <td class="specs-label">Quantization</td>
+              <td class="specs-value">AWQ / INT4 (Native Marlin GEMM Kernel)</td>
             </tr>
             <tr>
-              <td class="specs-key">Streaming Protocol</td>
-              <td class="specs-val">Native SSE (<code class="token-header">text/event-stream</code> with <code class="token-header">data: [DONE]</code>)</td>
+              <td class="specs-label">Protocol</td>
+              <td class="specs-value">HTTP/SSE Streaming (<code class="hl-hdr">text/event-stream</code> with <code class="hl-hdr">data: [DONE]</code>)</td>
             </tr>
             <tr>
-              <td class="specs-key">Generation Speed</td>
-              <td class="specs-val">~55 – 65 tokens/second (sustained per stream)</td>
+              <td class="specs-label">Output Speed</td>
+              <td class="specs-value">~55 – 65 tokens/second (sustained generation)</td>
             </tr>
             <tr>
-              <td class="specs-key">Latency (TTFT)</td>
-              <td class="specs-val">Median ~400ms | p95 &lt; 850ms (edge overhead included)</td>
+              <td class="specs-label">Time To First Token</td>
+              <td class="specs-value">Median ~400ms | p95 &lt; 850ms (edge inclusive)</td>
             </tr>
             <tr>
-              <td class="specs-key">Runtime Architecture</td>
-              <td class="specs-val">Containerized vLLM &bull; Continuous Dynamic Batching</td>
+              <td class="specs-label">Uptime Target</td>
+              <td class="specs-value specs-highlight">99.9% Availability SLA</td>
             </tr>
             <tr>
-              <td class="specs-key">Health Probe</td>
-              <td class="specs-val specs-live">GET /health &rarr; HTTP 200 OK (&lt; 5ms)</td>
+              <td class="specs-label">Healthcheck</td>
+              <td class="specs-value specs-highlight">GET /health &rarr; HTTP 200 OK (&lt; 5ms)</td>
             </tr>
           </tbody>
         </table>
@@ -671,26 +720,26 @@ stream = client.chat.completions.create(
       </div>
 
       <div class="zdr-card">
-        <div class="zdr-header">
+        <div class="zdr-badge">
           <span class="status-dot"></span>
-          <span>Zero Data Retention (ZDR) Policy</span>
+          <span>Zero Data Retention (ZDR)</span>
         </div>
-        <p class="zdr-text">
-          All requests are processed in ephemeral memory. Prompts and completions are never logged, cached to disk, or retained for model training under any circumstances.
+        <p class="zdr-statement">
+          Requests are held strictly in ephemeral GPU memory. Zero logging to disk, zero IP tracking, and zero model training on customer payloads.
         </p>
 
         <div class="zdr-grid">
-          <div class="zdr-item">
-            <div class="zdr-item-title">Ephemeral RAM/VRAM</div>
-            <div class="zdr-item-desc">KV cache and token activations exist solely in volatile memory and are purged immediately post-stream.</div>
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">Ephemeral Execution</div>
+            <div class="zdr-pillar-text">KV cache buffers and model activations exist strictly in volatile RAM/VRAM and are freed instantly on stream termination.</div>
           </div>
-          <div class="zdr-item">
-            <div class="zdr-item-title">Zero Disk Storage</div>
-            <div class="zdr-item-desc">Inference containers run with payload logging strictly disabled. No input/output data is persisted to disks.</div>
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">Zero Disk Storage</div>
+            <div class="zdr-pillar-text">Runtime containers run with prompt logging permanently disabled. No query or completion payloads touch non-volatile disk.</div>
           </div>
-          <div class="zdr-item">
-            <div class="zdr-item-title">No Training or Tuning</div>
-            <div class="zdr-item-desc">Payloads are never pooled, mined, or used for model training, reinforcement learning, or evaluation.</div>
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">No Model Training</div>
+            <div class="zdr-pillar-text">Customer traffic is never collected, pooled, or utilized for model fine-tuning, training datasets, or benchmarking.</div>
           </div>
         </div>
       </div>
@@ -698,55 +747,57 @@ stream = client.chat.completions.create(
 
   </main>
 
-  <!-- ==================== FOOTER ==================== -->
+  <!-- ==================== 3. FOOTER ==================== -->
   <footer>
     <div class="container footer-inner">
       <div>
-        &copy; 2026 VoltInfra Systems. SLA 99.5% Target.
+        &copy; 2026 VoltInfra. All rights reserved.
       </div>
       <div class="footer-links">
-        <span>Base: <code>https://api.voltinfra.xyz/v1</code></span>
-        <span>Contact: <a href="mailto:ops@voltinfra.xyz">ops@voltinfra.xyz</a></span>
+        <a href="#specs">Status (99.9%)</a>
+        <a href="#quickstart">Docs</a>
+        <a href="mailto:ops@voltinfra.xyz">Contact: ops@voltinfra.xyz</a>
       </div>
     </div>
   </footer>
 
-  <!-- ==================== JAVASCRIPT ==================== -->
+  <!-- ==================== 4. SCRIPT ==================== -->
   <script>
     let activeSnippet = 'curl';
     const tabCurl = document.getElementById('tab-curl');
     const tabPython = document.getElementById('tab-python');
-    const snippetCurl = document.getElementById('snippet-curl');
-    const snippetPython = document.getElementById('snippet-python');
-    const copyText = document.getElementById('copyText');
+    const codeCurl = document.getElementById('code-curl');
+    const codePython = document.getElementById('code-python');
+    const copyFeedback = document.getElementById('copyFeedback');
+    const btnCopy = document.getElementById('btnCopy');
 
-    function switchSnippet(type) {
+    function toggleSnippet(type) {
       activeSnippet = type;
       if (type === 'curl') {
         tabCurl.classList.add('active');
         tabPython.classList.remove('active');
-        snippetCurl.style.display = 'block';
-        snippetPython.style.display = 'none';
+        codeCurl.style.display = 'block';
+        codePython.style.display = 'none';
       } else {
         tabPython.classList.add('active');
         tabCurl.classList.remove('active');
-        snippetPython.style.display = 'block';
-        snippetCurl.style.display = 'none';
+        codePython.style.display = 'block';
+        codeCurl.style.display = 'none';
       }
     }
 
-    function copyActiveCode() {
-      const code = activeSnippet === 'curl' 
-        ? snippetCurl.innerText 
-        : snippetPython.innerText;
+    function copySnippet() {
+      const textToCopy = activeSnippet === 'curl' 
+        ? codeCurl.innerText 
+        : codePython.innerText;
 
-      navigator.clipboard.writeText(code).then(() => {
-        copyText.textContent = 'Copied!';
-        copyText.style.color = 'var(--green)';
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        copyFeedback.textContent = 'Copied!';
+        btnCopy.classList.add('copied');
         setTimeout(() => {
-          copyText.textContent = 'Copy';
-          copyText.style.color = '';
-        }, 1800);
+          copyFeedback.textContent = 'Copy';
+          btnCopy.classList.remove('copied');
+        }, 2000);
       });
     }
   </script>
