@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoltInfra — High-Throughput OpenAI-Compatible Inference</title>
-  <meta name="description" content="Direct, unmetered endpoints optimized for low latency and zero data retention." />
+  <title>VoltInfra — Dedicated Low-Latency Inference</title>
+  <meta name="description" content="OpenAI-compatible inference runtime for Qwen3 8B. High throughput, ZDR compliance, no retention." />
 
   <!-- Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -13,20 +13,20 @@
 
   <style>
     :root {
-      --bg: #090a0d;
-      --surface: #101216;
-      --surface-subtle: #15181f;
-      --surface-code: #060709;
+      --bg: #07080a;
+      --surface: #0e1015;
+      --surface-hover: #13161d;
+      --surface-code: #050608;
       --border: rgba(255, 255, 255, 0.08);
-      --border-hover: rgba(255, 255, 255, 0.18);
-      --text: #f4f4f5;
+      --border-focus: rgba(16, 185, 129, 0.4);
+      --text: #f3f4f6;
       --text-muted: #9ca3af;
-      --text-dim: #525866;
+      --text-dim: #4b5563;
       --emerald: #10b981;
-      --emerald-dim: rgba(16, 185, 129, 0.12);
-      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-      --container-max: 920px;
+      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --font-sans: 'Inter', -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --max-w: 1120px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,19 +49,21 @@
       position: relative;
     }
 
-    /* Ambient background grid */
+    /* Subtle ambient mesh background */
     body::before {
       content: "";
       position: absolute;
       top: 0;
-      left: 0;
+      left: 50%;
+      transform: translateX(-50%);
       width: 100%;
-      height: 520px;
+      max-width: 1400px;
+      height: 600px;
       background: 
-        radial-gradient(ellipse 60% 400px at 50% 0%, rgba(16, 185, 129, 0.06), transparent 80%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 100% 100%, 36px 36px, 36px 36px;
+        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.07) 0%, transparent 60%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 48px 48px, 48px 48px;
       pointer-events: none;
       z-index: -1;
     }
@@ -70,7 +72,7 @@
     code, pre { font-family: var(--font-mono); }
 
     .container {
-      max-width: var(--container-max);
+      max-width: var(--max-w);
       margin: 0 auto;
       padding: 0 24px;
       width: 100%;
@@ -79,7 +81,7 @@
     /* Header */
     header {
       border-bottom: 1px solid var(--border);
-      background-color: rgba(9, 10, 13, 0.85);
+      background: rgba(7, 8, 10, 0.8);
       backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
@@ -87,7 +89,7 @@
     }
 
     .header-inner {
-      height: 58px;
+      height: 60px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -100,32 +102,32 @@
     }
 
     .brand-logo {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 700;
       letter-spacing: -0.03em;
-      color: var(--text);
+      color: #fff;
     }
 
     .brand-tag {
       font-family: var(--font-mono);
       font-size: 10px;
-      font-weight: 500;
-      padding: 2px 6px;
+      font-weight: 600;
+      padding: 2px 7px;
       border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text-muted);
-      background-color: var(--surface);
     }
 
     .nav-links {
       display: flex;
       align-items: center;
-      gap: 22px;
+      gap: 24px;
       font-size: 13px;
       color: var(--text-muted);
     }
 
-    .nav-links a:hover { color: var(--text); }
+    .nav-links a:hover { color: #fff; }
 
     .status-badge {
       display: inline-flex;
@@ -133,11 +135,11 @@
       gap: 8px;
       font-family: var(--font-mono);
       font-size: 11px;
-      padding: 4px 10px;
+      padding: 4px 12px;
       border-radius: 9999px;
-      background-color: var(--emerald-dim);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: var(--emerald);
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
     }
 
     .status-dot {
@@ -145,21 +147,30 @@
       height: 6px;
       border-radius: 50%;
       background-color: var(--emerald);
-      box-shadow: 0 0 6px var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
     }
 
-    /* Hero */
-    .hero {
-      padding: 64px 0 40px;
+    /* Hero: Modern Two-Column Layout */
+    .hero-split {
+      padding: 72px 0 54px;
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 48px;
+      align-items: center;
     }
 
     .hero-pretitle {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
       font-family: var(--font-mono);
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--emerald);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 12px;
+      margin-bottom: 16px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: var(--emerald-glow);
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .hero-title {
@@ -167,49 +178,116 @@
       line-height: 1.15;
       font-weight: 700;
       letter-spacing: -0.04em;
-      color: var(--text);
-      margin-bottom: 14px;
-      max-width: 780px;
+      color: #fff;
+      margin-bottom: 18px;
     }
 
     .hero-subtitle {
-      font-size: 16px;
+      font-size: 15.5px;
       line-height: 1.6;
       color: var(--text-muted);
-      max-width: 620px;
       margin-bottom: 28px;
     }
 
-    .hero-meta {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
+    .hero-metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 12px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
     }
 
-    .meta-card {
-      background: var(--surface);
+    .metric-item .val {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .metric-item .lbl {
+      font-size: 11.5px;
+      color: var(--text-dim);
+      margin-top: 2px;
+    }
+
+    /* Code Container in Hero */
+    .code-container {
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 8px 14px;
+      border-radius: 10px;
+      background-color: var(--surface-code);
+      overflow: hidden;
+      box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
+    }
+
+    .code-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      background-color: var(--surface);
+    }
+
+    .code-tabs { display: flex; gap: 4px; }
+
+    .code-tab {
+      background: none;
+      border: 1px solid transparent;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .code-tab.active {
+      color: #fff;
+      background-color: var(--surface-code);
+      border-color: var(--border);
+    }
+
+    .btn-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-copy:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
+    .btn-copy.copied { color: var(--emerald); border-color: var(--emerald); }
+
+    .code-body {
+      padding: 18px;
+      overflow-x: auto;
       font-family: var(--font-mono);
       font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
+      line-height: 1.65;
     }
 
-    .meta-card .label { color: var(--text-dim); }
-    .meta-card .val { color: var(--text); }
+    .code-body pre { margin: 0; }
+
+    .hl-cmd { color: #38bdf8; }
+    .hl-str { color: #fde047; }
+    .hl-hdr { color: #34d399; }
+    .hl-kw { color: #c084fc; }
 
     /* Sections */
     .section {
-      padding: 44px 0;
+      padding: 48px 0;
       border-top: 1px solid var(--border);
     }
 
     .section-header {
-      margin-bottom: 18px;
+      margin-bottom: 20px;
       display: flex;
       justify-content: space-between;
       align-items: baseline;
@@ -224,87 +302,18 @@
       color: var(--text-muted);
     }
 
-    .section-note {
+    .section-desc {
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--text-dim);
     }
 
-    /* Code Container */
-    .code-container {
+    /* Specs & Deployments Table */
+    .specs-card {
+      background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      background-color: var(--surface-code);
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 8px 24px -10px rgba(0,0,0,0.5);
-    }
-
-    .code-toolbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--border);
-      background-color: var(--surface);
-    }
-
-    .code-tabs { display: flex; gap: 4px; }
-
-    .code-tab {
-      background: none;
-      border: 1px solid transparent;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .code-tab.active {
-      color: var(--text);
-      background-color: var(--surface-code);
-      border-color: var(--border);
-    }
-
-    .btn-copy {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 4px 9px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      background-color: var(--surface-subtle);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text-muted);
-      cursor: pointer;
-    }
-
-    .btn-copy:hover { color: var(--text); border-color: var(--border-hover); }
-    .btn-copy.copied { color: var(--emerald); border-color: var(--emerald); }
-
-    .code-body {
-      padding: 16px 18px;
-      overflow-x: auto;
-      font-family: var(--font-mono);
-      font-size: 12.5px;
-      line-height: 1.65;
-    }
-
-    .code-body pre { margin: 0; }
-
-    .hl-cmd { color: #38bdf8; }
-    .hl-str { color: #fef08a; }
-    .hl-hdr { color: #34d399; }
-    .hl-kw { color: #c084fc; }
-
-    /* Tables & Grids */
-    .table-container {
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      overflow: hidden;
-      background-color: var(--surface);
     }
 
     .specs-table {
@@ -316,14 +325,15 @@
 
     .specs-table tr { border-bottom: 1px solid var(--border); }
     .specs-table tr:last-child { border-bottom: none; }
-    .specs-table td { padding: 12px 18px; }
-    .specs-label { color: var(--text-muted); width: 220px; }
+    .specs-table td { padding: 13px 20px; }
+    .specs-table tr:hover { background-color: var(--surface-hover); }
+    .specs-label { color: var(--text-muted); width: 240px; }
     .specs-value { color: var(--text); }
     .specs-tag {
-      padding: 2px 6px;
+      padding: 2px 7px;
       border-radius: 4px;
-      font-size: 10px;
-      background-color: var(--surface-subtle);
+      font-size: 10.5px;
+      background: rgba(255,255,255,0.04);
       border: 1px solid var(--border);
       color: var(--text-muted);
       margin-left: 8px;
@@ -332,33 +342,45 @@
     /* Pricing Section */
     .pricing-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
     }
 
     .pricing-card {
       background: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
+      border-radius: 10px;
+      padding: 24px;
+      position: relative;
+    }
+
+    .pricing-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--emerald);
+      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .pricing-title {
       font-family: var(--font-mono);
       font-size: 13px;
       font-weight: 600;
-      color: var(--text);
-      margin-bottom: 6px;
-      display: flex;
-      justify-content: space-between;
+      color: #fff;
     }
 
     .pricing-rate {
       font-family: var(--font-mono);
-      font-size: 24px;
+      font-size: 28px;
       font-weight: 700;
-      color: var(--emerald);
-      margin: 12px 0 6px;
+      color: #fff;
+      margin: 14px 0 6px;
+      letter-spacing: -0.03em;
     }
 
     .pricing-rate span {
@@ -368,46 +390,44 @@
     }
 
     .pricing-desc {
-      font-size: 12px;
+      font-size: 12.5px;
       color: var(--text-muted);
       line-height: 1.5;
     }
 
-    /* ZDR */
+    /* ZDR Grid */
     .zdr-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
     }
 
-    .zdr-pillar {
-      background-color: var(--surface);
+    .zdr-box {
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 18px;
+      padding: 20px;
+    }
+
+    .zdr-box-title {
       font-family: var(--font-mono);
-      font-size: 11.5px;
-    }
-
-    .zdr-pillar-title {
-      color: var(--text);
+      font-size: 12.5px;
       font-weight: 600;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      color: #fff;
+      margin-bottom: 8px;
     }
 
-    .zdr-pillar-text {
+    .zdr-box-text {
+      font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     /* Footer */
     footer {
       border-top: 1px solid var(--border);
-      padding: 28px 0;
-      margin-top: 48px;
+      padding: 32px 0;
+      margin-top: 56px;
       font-family: var(--font-mono);
       font-size: 12px;
       color: var(--text-dim);
@@ -427,11 +447,13 @@
       gap: 20px;
     }
 
-    .footer-links a:hover { color: var(--text); }
+    .footer-links a:hover { color: #fff; }
 
-    @media (max-width: 680px) {
-      .hero-title { font-size: 28px; }
-      .specs-label { width: 140px; }
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero-split { grid-template-columns: 1fr; gap: 36px; padding: 48px 0 36px; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      .zdr-grid { grid-template-columns: 1fr; }
       .nav-links { display: none; }
     }
   </style>
@@ -443,19 +465,19 @@
     <div class="container header-inner">
       <div class="brand">
         <a href="#" class="brand-logo">VoltInfra</a>
-        <span class="brand-tag">inference-v1</span>
+        <span class="brand-tag">vLLM / v1</span>
       </div>
 
       <nav class="nav-links">
-        <a href="#quickstart">Quickstart</a>
-        <a href="#models">Models</a>
+        <a href="#quickstart">Integration</a>
+        <a href="#deployments">Specs</a>
         <a href="#pricing">Pricing</a>
-        <a href="#privacy">Zero Retention</a>
+        <a href="#privacy">ZDR Policy</a>
       </nav>
 
       <div class="status-badge">
         <span class="status-dot"></span>
-        <span>Systems Operational</span>
+        <span>Operational</span>
       </div>
     </div>
   </header>
@@ -463,124 +485,123 @@
   <!-- MAIN -->
   <main class="container">
 
-    <!-- HERO -->
-    <section class="hero">
-      <div class="hero-pretitle">High-Throughput Inference Runtime</div>
-      <h1 class="hero-title">
-        Direct OpenAI-Compatible Endpoints with Zero Data Retention.
-      </h1>
-      <p class="hero-subtitle">
-        Low-latency, unmetered token generation powered by vLLM and PagedAttention kernels. Built for production agents and OpenRouter routing.
-      </p>
-
-      <div class="hero-meta">
-        <div class="meta-card">
-          <span class="label">Base URL:</span>
-          <span class="val">https://api.voltinfra.xyz/v1</span>
+    <!-- HERO SPLIT -->
+    <section class="hero-split">
+      <div class="hero-left">
+        <div class="hero-pretitle">
+          <span>●</span> Direct Runtime Node
         </div>
-        <div class="meta-card">
-          <span class="label">SLA:</span>
-          <span class="val" style="color: var(--emerald);">99.9% Availability</span>
-        </div>
-        <div class="meta-card">
-          <span class="label">Logging:</span>
-          <span class="val">Disabled (RAM Ephemeral)</span>
-        </div>
-      </div>
-    </section>
+        <h1 class="hero-title">
+          OpenAI-Compatible Inference for Qwen3 8B.
+        </h1>
+        <p class="hero-subtitle">
+          Direct, unmetered token generation powered by vLLM and PagedAttention kernels. Built for developer integration and OpenRouter overflow routing.
+        </p>
 
-    <!-- QUICKSTART -->
-    <section id="quickstart" class="section">
-      <div class="section-header">
-        <h2 class="section-title">Integration Snippet</h2>
-        <span class="section-note">Protocol: text/event-stream (SSE)</span>
-      </div>
-
-      <div class="code-container">
-        <div class="code-toolbar">
-          <div class="code-tabs">
-            <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
-            <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
+        <div class="hero-metrics">
+          <div class="metric-item">
+            <div class="val">&gt;55 tps</div>
+            <div class="lbl">Sustained Speed</div>
           </div>
-          <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            <span id="copyFeedback">Copy</span>
-          </button>
+          <div class="metric-item">
+            <div class="val">~400ms</div>
+            <div class="lbl">Median TTFT</div>
+          </div>
+          <div class="metric-item">
+            <div class="val">ZDR</div>
+            <div class="lbl">Zero Data Logs</div>
+          </div>
         </div>
+      </div>
 
-        <div class="code-body">
-          <pre id="code-curl"><code><span class="hl-cmd">curl</span> -X POST <span class="hl-str">"https://api.voltinfra.xyz/v1/chat/completions"</span> \
+      <!-- Live Code Block right in the Hero -->
+      <div class="hero-right" id="quickstart">
+        <div class="code-container">
+          <div class="code-toolbar">
+            <div class="code-tabs">
+              <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
+              <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
+            </div>
+            <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="copyFeedback">Copy</span>
+            </button>
+          </div>
+
+          <div class="code-body">
+            <pre id="code-curl"><code><span class="hl-cmd">curl</span> -X POST <span class="hl-str">"https://api.voltinfra.xyz/v1/chat/completions"</span> \
   -H <span class="hl-hdr">"Content-Type: application/json"</span> \
   -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
   -d '{
-    "model": "Qwen/Qwen3-8B",
+    "model": "qwen/qwen3-8b",
     "messages": [
-      { "role": "system", "content": "You are a low-latency systems assistant." },
-      { "role": "user", "content": "Return the cluster health spec in JSON." }
+      { "role": "system", "content": "You are a concise runtime assistant." },
+      { "role": "user", "content": "Ping inference endpoint." }
     ],
     "temperature": 0.2,
     "max_tokens": 512,
     "stream": true
   }'</code></pre>
 
-          <pre id="code-python" style="display: none;"><code><span class="hl-kw">from</span> openai <span class="hl-kw">import</span> OpenAI
+            <pre id="code-python" style="display: none;"><code><span class="hl-kw">from</span> openai <span class="hl-kw">import</span> OpenAI
 
 client = OpenAI(
     base_url=<span class="hl-str">"https://api.voltinfra.xyz/v1"</span>,
     api_key=<span class="hl-str">"sk-volt-..."</span>
 )
 
-response = client.chat.completions.create(
-    model=<span class="hl-str">"Qwen/Qwen3-8B"</span>,
-    messages=[{<span class="hl-hdr">"role"</span>: <span class="hl-hdr">"user"</span>, <span class="hl-hdr">"content"</span>: <span class="hl-hdr">"Ping inference endpoint"</span>}],
+stream = client.chat.completions.create(
+    model=<span class="hl-str">"qwen/qwen3-8b"</span>,
+    messages=[{<span class="hl-hdr">"role"</span>: <span class="hl-hdr">"user"</span>, <span class="hl-hdr">"content"</span>: <span class="hl-hdr">"Ping node"</span>}],
     stream=<span class="hl-kw">True</span>
 )
 
-<span class="hl-kw">for</span> chunk <span class="hl-kw">in</span> response:
+<span class="hl-kw">for</span> chunk <span class="hl-kw">in</span> stream:
     print(chunk.choices[0].delta.content or <span class="hl-str">""</span>, end=<span class="hl-str">""</span>, flush=<span class="hl-kw">True</span>)</code></pre>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- SPECIFICATIONS -->
-    <section id="models" class="section">
+    <!-- SPECS / DEPLOYMENTS -->
+    <section id="deployments" class="section">
       <div class="section-header">
-        <h2 class="section-title">Active Deployments</h2>
-        <span class="section-note">Runtime: vLLM (Marlin GEMM Kernel)</span>
+        <h2 class="section-title">Active Node Specifications</h2>
+        <span class="section-desc">Host Runtime: vLLM Marlin Kernel</span>
       </div>
 
-      <div class="table-container">
+      <div class="specs-card">
         <table class="specs-table">
           <tbody>
             <tr>
               <td class="specs-label">Model Target</td>
               <td class="specs-value">
-                <strong>Qwen/Qwen2.5-8B-Instruct</strong>
-                <span class="specs-tag">Production Active</span>
+                <strong>qwen/qwen3-8b</strong>
+                <span class="specs-tag">Primary Endpoint</span>
               </td>
             </tr>
             <tr>
               <td class="specs-label">Context Allocation</td>
-              <td class="specs-value">32,768 tokens (PagedAttention continuous batching)</td>
+              <td class="specs-value">32,768 tokens (continuous batching & dynamic KV cache)</td>
             </tr>
             <tr>
-              <td class="specs-label">Precision / Weights</td>
-              <td class="specs-value">AWQ / INT4 quantized weights (Zero quality loss)</td>
+              <td class="specs-label">Quantization / Weights</td>
+              <td class="specs-value">AWQ / INT4 precision (zero perplexity degradation)</td>
             </tr>
             <tr>
-              <td class="specs-label">Output Throughput</td>
-              <td class="specs-value">~55 – 65 tokens/sec (stream generation)</td>
+              <td class="specs-label">Output Protocol</td>
+              <td class="specs-value">HTTP/SSE Streaming (<code class="hl-hdr">text/event-stream</code> compatible)</td>
             </tr>
             <tr>
-              <td class="specs-label">Time to First Token (TTFT)</td>
-              <td class="specs-value">~400ms median</td>
+              <td class="specs-label">Cold-Start & Keepalive</td>
+              <td class="specs-value">Persistent weights in VRAM (0ms cold start)</td>
             </tr>
             <tr>
-              <td class="specs-label">Health & Metrics</td>
-              <td class="specs-value"><code class="hl-hdr">GET /health</code> &rarr; HTTP 200 OK</td>
+              <td class="specs-label">Health & Probes</td>
+              <td class="specs-value"><code class="hl-hdr">GET /health</code> &rarr; HTTP 200 OK (&lt; 5ms)</td>
             </tr>
           </tbody>
         </table>
@@ -590,49 +611,46 @@ response = client.chat.completions.create(
     <!-- PRICING -->
     <section id="pricing" class="section">
       <div class="section-header">
-        <h2 class="section-title">Transparent Pricing</h2>
-        <span class="section-note">Priced to parity with major cloud providers</span>
+        <h2 class="section-title">Transparent Token Pricing</h2>
+        <span class="section-desc">Parity matched with upstream cloud rates</span>
       </div>
 
       <div class="pricing-grid">
         <div class="pricing-card">
-          <div class="pricing-title">
-            <span>Prompt (Input)</span>
-            <span class="specs-tag">Per 1M Tokens</span>
-          </div>
+          <span class="pricing-badge">Prompt Processing</span>
+          <div class="pricing-title">Input Context</div>
           <div class="pricing-rate">$0.117 <span>/ 1M tokens</span></div>
-          <p class="pricing-desc">Raw context processing. Evaluated dynamically without minimum batching fee.</p>
+          <p class="pricing-desc">Dynamic prefill processing with flash attention kernels. No batch surcharge or hidden network egress fees.</p>
         </div>
 
         <div class="pricing-card">
-          <div class="pricing-title">
-            <span>Completion (Output)</span>
-            <span class="specs-tag">Per 1M Tokens</span>
-          </div>
+          <span class="pricing-badge">Generation</span>
+          <div class="pricing-title">Output Completion</div>
           <div class="pricing-rate">$0.455 <span>/ 1M tokens</span></div>
-          <p class="pricing-desc">High-speed streaming generation with continuous token pipelining.</p>
+          <p class="pricing-desc">Continuous token streaming generation at full GPU clock speeds with zero queue penalty.</p>
         </div>
       </div>
     </section>
 
-    <!-- DATA PRIVACY (ZDR) -->
+    <!-- ZDR / PRIVACY -->
     <section id="privacy" class="section">
       <div class="section-header">
-        <h2 class="section-title">Zero Data Retention (ZDR) Policy</h2>
+        <h2 class="section-title">Zero Data Retention (ZDR) Architecture</h2>
+        <span class="section-desc">Designed for enterprise & developer isolation</span>
       </div>
 
       <div class="zdr-grid">
-        <div class="zdr-pillar">
-          <div class="zdr-pillar-title">Volatile RAM Only</div>
-          <div class="zdr-pillar-text">Context and activations exist strictly in ephemeral GPU memory buffers. All allocations are wiped upon socket closure.</div>
+        <div class="zdr-box">
+          <div class="zdr-box-title">Ephemeral VRAM Only</div>
+          <div class="zdr-box-text">All request activations and KV caches exist exclusively in GPU memory. Buffers are released immediately upon socket close.</div>
         </div>
-        <div class="zdr-pillar">
-          <div class="zdr-pillar-title">Zero Disk Logs</div>
-          <div class="zdr-pillar-text">Inference containers run with payload tracing permanently disabled. Prompts never touch persistent solid-state drives.</div>
+        <div class="zdr-box">
+          <div class="zdr-box-title">No Persistent Disk Logs</div>
+          <div class="zdr-box-text">Inference containers run with payload logging strictly disabled. No input prompts or completions ever touch storage drives.</div>
         </div>
-        <div class="zdr-pillar">
-          <div class="zdr-pillar-title">No Model Training</div>
-          <div class="zdr-pillar-text">Your queries are strictly your own. Customer traffic is never pooled, inspected, or utilized for fine-tuning.</div>
+        <div class="zdr-box">
+          <div class="zdr-box-title">Zero Model Training</div>
+          <div class="zdr-box-text">Customer traffic is strictly private. Data is never collected, pooled, retained, or utilized for fine-tuning or evaluation.</div>
         </div>
       </div>
     </section>
@@ -642,10 +660,10 @@ response = client.chat.completions.create(
   <!-- FOOTER -->
   <footer>
     <div class="container footer-inner">
-      <div>&copy; 2026 VoltInfra. Unmetered Developer Inference.</div>
+      <div>&copy; 2026 VoltInfra. OpenAI-Compatible Inference Node.</div>
       <div class="footer-links">
-        <a href="#quickstart">API Docs</a>
-        <a href="#pricing">Rates</a>
+        <a href="#quickstart">Integration</a>
+        <a href="#pricing">Pricing</a>
         <a href="mailto:ops@voltinfra.xyz">Contact: ops@voltinfra.xyz</a>
       </div>
     </div>
