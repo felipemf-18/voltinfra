@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VoltInfra — Dedicated Low-Latency Inference</title>
-  <meta name="description" content="OpenAI-compatible inference runtime for Qwen3 8B. High throughput, ZDR compliance, no retention." />
+  <title>VoltInfra — High-Throughput Qwen3 Reranker 8B Runtime</title>
+  <meta name="description" content="Direct, low-latency cross-encoder reranking endpoint optimized for enterprise RAG and zero data retention." />
 
   <!-- Fonts: Inter & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -12,24 +12,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
   <style>
+    /* ==========================================================================
+       VoltInfra Design System (Developer-First, Dark Mode)
+       ========================================================================== */
     :root {
-      --bg: #07080a;
-      --surface: #0e1015;
-      --surface-hover: #13161d;
-      --surface-code: #050608;
+      --bg: #0b0c0e;
+      --surface: #111216;
+      --surface-subtle: #14161c;
+      --surface-code: #08080a;
       --border: rgba(255, 255, 255, 0.08);
-      --border-focus: rgba(16, 185, 129, 0.4);
-      --text: #f3f4f6;
+      --border-hover: rgba(255, 255, 255, 0.16);
+      --text: #f4f4f5;
       --text-muted: #9ca3af;
-      --text-dim: #4b5563;
+      --text-dim: #6b7280;
       --emerald: #10b981;
-      --emerald-glow: rgba(16, 185, 129, 0.15);
-      --font-sans: 'Inter', -apple-system, sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-      --max-w: 1120px;
+      --emerald-glow: rgba(16, 185, 129, 0.25);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --container-max: 880px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     html {
       scroll-behavior: smooth;
@@ -42,54 +49,45 @@
       font-size: 14px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
-      position: relative;
     }
 
-    /* Subtle ambient mesh background */
-    body::before {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 100%;
-      max-width: 1400px;
-      height: 600px;
-      background: 
-        radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.07) 0%, transparent 60%),
-        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-      background-size: 100% 100%, 48px 48px, 48px 48px;
-      pointer-events: none;
-      z-index: -1;
+    a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.15s ease, border-color 0.15s ease;
     }
 
-    a { color: inherit; text-decoration: none; }
-    code, pre { font-family: var(--font-mono); }
+    code, pre {
+      font-family: var(--font-mono);
+    }
 
     .container {
-      max-width: var(--max-w);
+      max-width: var(--container-max);
       margin: 0 auto;
       padding: 0 24px;
       width: 100%;
     }
 
-    /* Header */
+    /* ==========================================================================
+       Header
+       ========================================================================== */
     header {
       border-bottom: 1px solid var(--border);
-      background: rgba(7, 8, 10, 0.8);
+      background-color: rgba(11, 12, 14, 0.88);
       backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       position: sticky;
       top: 0;
       z-index: 50;
     }
 
     .header-inner {
-      height: 60px;
+      height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -98,25 +96,25 @@
     .brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 8px;
     }
 
     .brand-logo {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 700;
-      letter-spacing: -0.03em;
-      color: #fff;
+      letter-spacing: -0.02em;
+      color: var(--text);
     }
 
     .brand-tag {
       font-family: var(--font-mono);
       font-size: 10px;
-      font-weight: 600;
-      padding: 2px 7px;
+      font-weight: 500;
+      padding: 2px 6px;
       border-radius: 4px;
-      background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
       color: var(--text-muted);
+      background-color: var(--surface);
     }
 
     .nav-links {
@@ -127,7 +125,9 @@
       color: var(--text-muted);
     }
 
-    .nav-links a:hover { color: #fff; }
+    .nav-links a:hover {
+      color: var(--text);
+    }
 
     .status-badge {
       display: inline-flex;
@@ -135,114 +135,226 @@
       gap: 8px;
       font-family: var(--font-mono);
       font-size: 11px;
-      padding: 4px 12px;
+      font-weight: 500;
+      padding: 5px 12px;
       border-radius: 9999px;
       background-color: var(--surface);
       border: 1px solid var(--border);
-      color: var(--text-muted);
+      color: var(--text);
     }
 
     .status-dot {
-      width: 6px;
-      height: 6px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background-color: var(--emerald);
-      box-shadow: 0 0 8px var(--emerald);
+      position: relative;
     }
 
-    /* Hero: Modern Two-Column Layout */
-    .hero-split {
-      padding: 72px 0 54px;
-      display: grid;
-      grid-template-columns: 1.05fr 0.95fr;
-      gap: 48px;
-      align-items: center;
+    .status-dot::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      background-color: var(--emerald);
+      opacity: 0.4;
+      animation: pulse-ring 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
     }
 
-    .hero-pretitle {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      color: var(--emerald);
-      margin-bottom: 16px;
-      padding: 4px 10px;
-      border-radius: 4px;
-      background: var(--emerald-glow);
-      border: 1px solid rgba(16, 185, 129, 0.2);
+    @keyframes pulse-ring {
+      0% { transform: scale(0.95); opacity: 0.6; }
+      50% { transform: scale(1.6); opacity: 0; }
+      100% { transform: scale(0.95); opacity: 0; }
+    }
+
+    /* ==========================================================================
+       Hero Section
+       ========================================================================== */
+    .hero {
+      padding: 72px 0 48px;
     }
 
     .hero-title {
-      font-size: 38px;
-      line-height: 1.15;
+      font-size: 34px;
+      line-height: 1.2;
       font-weight: 700;
-      letter-spacing: -0.04em;
-      color: #fff;
-      margin-bottom: 18px;
+      letter-spacing: -0.03em;
+      color: var(--text);
+      margin-bottom: 16px;
+      max-width: 720px;
     }
 
     .hero-subtitle {
-      font-size: 15.5px;
+      font-size: 16px;
       line-height: 1.6;
       color: var(--text-muted);
-      margin-bottom: 28px;
+      max-width: 640px;
+      margin-bottom: 24px;
+      font-weight: 400;
     }
 
     .hero-metrics {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
-      padding-top: 18px;
+      margin-bottom: 28px;
+      max-width: 680px;
+    }
+
+    .metric-badge-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      transition: border-color 0.15s ease;
+    }
+
+    .metric-badge-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .metric-badge-val {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--emerald);
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .metric-badge-label {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .hero-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px 18px;
+      border-radius: 5px;
+      font-size: 13px;
+      font-family: var(--font-mono);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background-color: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .btn-primary:hover {
+      background-color: #ffffff;
+      border-color: #ffffff;
+    }
+
+    .btn-secondary {
+      background-color: var(--surface);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--surface-subtle);
+      border-color: var(--border-hover);
+    }
+
+    .endpoint-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      padding: 8px 12px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background-color: var(--surface);
+    }
+
+    .endpoint-pill code {
+      color: var(--text-muted);
+    }
+
+    /* ==========================================================================
+       Section Styling
+       ========================================================================== */
+    .section {
+      padding: 48px 0;
       border-top: 1px solid var(--border);
     }
 
-    .metric-item .val {
+    .section-header {
+      margin-bottom: 20px;
+    }
+
+    .section-title {
       font-family: var(--font-mono);
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-muted);
     }
 
-    .metric-item .lbl {
-      font-size: 11.5px;
-      color: var(--text-dim);
-      margin-top: 2px;
-    }
-
-    /* Code Container in Hero */
+    /* ==========================================================================
+       Code Block Component
+       ========================================================================== */
     .code-container {
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
       background-color: var(--surface-code);
       overflow: hidden;
-      box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.7);
     }
 
     .code-toolbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 14px;
+      padding: 8px 14px;
       border-bottom: 1px solid var(--border);
       background-color: var(--surface);
     }
 
-    .code-tabs { display: flex; gap: 4px; }
+    .code-tabs {
+      display: flex;
+      gap: 6px;
+    }
 
     .code-tab {
       background: none;
       border: 1px solid transparent;
       padding: 4px 10px;
-      border-radius: 5px;
+      border-radius: 4px;
       font-family: var(--font-mono);
       font-size: 11px;
       color: var(--text-muted);
       cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .code-tab:hover {
+      color: var(--text);
     }
 
     .code-tab.active {
-      color: #fff;
+      color: var(--text);
       background-color: var(--surface-code);
       border-color: var(--border);
     }
@@ -254,7 +366,7 @@
       padding: 4px 10px;
       font-family: var(--font-mono);
       font-size: 11px;
-      background-color: var(--surface);
+      background-color: var(--surface-code);
       border: 1px solid var(--border);
       border-radius: 4px;
       color: var(--text-muted);
@@ -262,168 +374,165 @@
       transition: all 0.15s ease;
     }
 
-    .btn-copy:hover { color: #fff; border-color: rgba(255,255,255,0.25); }
-    .btn-copy.copied { color: var(--emerald); border-color: var(--emerald); }
-
-    .code-body {
-      padding: 18px;
-      overflow-x: auto;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.65;
+    .btn-copy:hover {
+      color: var(--text);
+      border-color: var(--border-hover);
     }
 
-    .code-body pre { margin: 0; }
+    .btn-copy.copied {
+      color: var(--emerald);
+      border-color: var(--emerald);
+    }
 
+    .code-body {
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 12.5px;
+      line-height: 1.7;
+      color: #e4e4e7;
+    }
+
+    .code-body pre {
+      margin: 0;
+      white-space: pre;
+    }
+
+    /* Syntax Highlighting */
     .hl-cmd { color: #38bdf8; }
-    .hl-str { color: #fde047; }
+    .hl-str { color: #fef08a; }
     .hl-hdr { color: #34d399; }
     .hl-kw { color: #c084fc; }
 
-    /* Sections */
-    .section {
-      padding: 48px 0;
+    .code-statusbar {
+      padding: 8px 16px;
       border-top: 1px solid var(--border);
-    }
-
-    .section-header {
-      margin-bottom: 20px;
+      background-color: rgba(11, 12, 14, 0.6);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-dim);
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
     }
 
-    .section-title {
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--text-muted);
-    }
-
-    .section-desc {
-      font-family: var(--font-mono);
-      font-size: 11.5px;
-      color: var(--text-dim);
-    }
-
-    /* Specs & Deployments Table */
-    .specs-card {
-      background: var(--surface);
+    /* ==========================================================================
+       Specifications Table
+       ========================================================================== */
+    .table-container {
       border: 1px solid var(--border);
-      border-radius: 10px;
+      border-radius: 8px;
       overflow: hidden;
+      background-color: var(--surface);
     }
 
     .specs-table {
       width: 100%;
       border-collapse: collapse;
+      text-align: left;
       font-size: 12.5px;
       font-family: var(--font-mono);
     }
 
-    .specs-table tr { border-bottom: 1px solid var(--border); }
-    .specs-table tr:last-child { border-bottom: none; }
-    .specs-table td { padding: 13px 20px; }
-    .specs-table tr:hover { background-color: var(--surface-hover); }
-    .specs-label { color: var(--text-muted); width: 240px; }
-    .specs-value { color: var(--text); }
+    .specs-table tr {
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.15s ease;
+    }
+
+    .specs-table tr:last-child {
+      border-bottom: none;
+    }
+
+    .specs-table tr:hover {
+      background-color: var(--surface-subtle);
+    }
+
+    .specs-table td {
+      padding: 12px 18px;
+    }
+
+    .specs-label {
+      color: var(--text-muted);
+      width: 200px;
+      font-weight: 500;
+    }
+
+    .specs-value {
+      color: var(--text);
+    }
+
     .specs-tag {
+      display: inline-block;
       padding: 2px 7px;
       border-radius: 4px;
-      font-size: 10.5px;
-      background: rgba(255,255,255,0.04);
+      font-size: 11px;
+      background-color: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--border);
-      color: var(--text-muted);
+      color: var(--text);
       margin-left: 8px;
     }
 
-    /* Pricing Section */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 18px;
-    }
-
-    .pricing-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 24px;
-      position: relative;
-    }
-
-    .pricing-badge {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      padding: 3px 8px;
-      border-radius: 4px;
-      background: rgba(16, 185, 129, 0.1);
+    .specs-highlight {
       color: var(--emerald);
-      border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
-    .pricing-title {
+    /* ==========================================================================
+       Zero Data Retention Card
+       ========================================================================== */
+    .zdr-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background-color: var(--surface);
+      padding: 28px;
+    }
+
+    .zdr-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
       font-family: var(--font-mono);
-      font-size: 13px;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    .pricing-rate {
-      font-family: var(--font-mono);
-      font-size: 28px;
-      font-weight: 700;
-      color: #fff;
-      margin: 14px 0 6px;
-      letter-spacing: -0.03em;
-    }
-
-    .pricing-rate span {
       font-size: 12px;
-      color: var(--text-dim);
-      font-weight: 400;
+      font-weight: 600;
+      color: var(--emerald);
+      margin-bottom: 12px;
     }
 
-    .pricing-desc {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.5;
+    .zdr-statement {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: var(--text);
+      margin-bottom: 24px;
+      max-width: 760px;
     }
 
-    /* ZDR Grid */
     .zdr-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 16px;
     }
 
-    .zdr-box {
-      background: var(--surface);
+    .zdr-pillar {
+      background-color: var(--bg);
       border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 20px;
-    }
-
-    .zdr-box-title {
+      border-radius: 6px;
+      padding: 14px 16px;
       font-family: var(--font-mono);
-      font-size: 12.5px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 8px;
+      font-size: 11.5px;
     }
 
-    .zdr-box-text {
-      font-size: 12px;
+    .zdr-pillar-title {
+      color: var(--text);
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .zdr-pillar-text {
       color: var(--text-muted);
       line-height: 1.55;
     }
 
-    /* Footer */
+    /* ==========================================================================
+       Footer
+       ========================================================================== */
     footer {
       border-top: 1px solid var(--border);
       padding: 32px 0;
@@ -447,256 +556,322 @@
       gap: 20px;
     }
 
-    .footer-links a:hover { color: #fff; }
+    .footer-links a {
+      color: var(--text-muted);
+    }
 
-    /* Responsive */
-    @media (max-width: 900px) {
-      .hero-split { grid-template-columns: 1fr; gap: 36px; padding: 48px 0 36px; }
-      .pricing-grid { grid-template-columns: 1fr; }
-      .zdr-grid { grid-template-columns: 1fr; }
-      .nav-links { display: none; }
+    .footer-links a:hover {
+      color: var(--text);
+    }
+
+    /* ==========================================================================
+       Responsive Adjustments
+       ========================================================================== */
+    @media (max-width: 680px) {
+      .hero {
+        padding: 48px 0 36px;
+      }
+      .hero-title {
+        font-size: 26px;
+      }
+      .hero-subtitle {
+        font-size: 14.5px;
+      }
+      .specs-label {
+        width: 130px;
+      }
+      .nav-links {
+        display: none;
+      }
+      .hero-actions {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .endpoint-pill {
+        width: 100%;
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- HEADER -->
+  <!-- ==================== 1. HEADER ==================== -->
   <header>
     <div class="container header-inner">
       <div class="brand">
         <a href="#" class="brand-logo">VoltInfra</a>
-        <span class="brand-tag">vLLM / v1</span>
+        <span class="brand-tag">v1.0</span>
       </div>
 
       <nav class="nav-links">
-        <a href="#quickstart">Integration</a>
-        <a href="#deployments">Specs</a>
-        <a href="#pricing">Pricing</a>
-        <a href="#privacy">ZDR Policy</a>
+        <a href="#quickstart">Quickstart</a>
+        <a href="#specs">Specifications</a>
+        <a href="#zdr">Data Privacy</a>
+        <a href="mailto:ops@voltinfra.xyz">Support</a>
       </nav>
 
       <div class="status-badge">
         <span class="status-dot"></span>
-        <span>Operational</span>
+        <span>Operational ● Direct Runtime Node</span>
       </div>
     </div>
   </header>
 
-  <!-- MAIN -->
+  <!-- ==================== 2. MAIN CONTAINER ==================== -->
   <main class="container">
 
-    <!-- HERO SPLIT -->
-    <section class="hero-split">
-      <div class="hero-left">
-        <div class="hero-pretitle">
-          <span>●</span> Direct Runtime Node
-        </div>
-        <h1 class="hero-title">
-          OpenAI-Compatible Inference for Qwen3 8B.
-        </h1>
-        <p class="hero-subtitle">
-          Direct, unmetered token generation powered by vLLM and PagedAttention kernels. Built for developer integration and OpenRouter overflow routing.
-        </p>
+    <!-- Hero Section -->
+    <section class="hero">
+      <h1 class="hero-title">
+        High-Throughput Cross-Encoder Runtime for Qwen3 Reranker 8B.
+      </h1>
+      <p class="hero-subtitle">
+        Ultra-low latency query-document scoring and reranking for enterprise RAG pipelines. Built for developer integration and OpenRouter overflow routing.
+      </p>
 
-        <div class="hero-metrics">
-          <div class="metric-item">
-            <div class="val">&gt;55 tps</div>
-            <div class="lbl">Sustained Speed</div>
-          </div>
-          <div class="metric-item">
-            <div class="val">~400ms</div>
-            <div class="lbl">Median TTFT</div>
-          </div>
-          <div class="metric-item">
-            <div class="val">ZDR</div>
-            <div class="lbl">Zero Data Logs</div>
-          </div>
+      <!-- Key Metric Badges -->
+      <div class="hero-metrics">
+        <div class="metric-badge-card">
+          <div class="metric-badge-val">&gt;2,200 tok/s</div>
+          <div class="metric-badge-label">Sustained Scoring Throughput</div>
+        </div>
+        <div class="metric-badge-card">
+          <div class="metric-badge-val">&lt;350ms</div>
+          <div class="metric-badge-label">Median Batch Latency</div>
+        </div>
+        <div class="metric-badge-card">
+          <div class="metric-badge-val"><span class="status-dot" style="display:inline-block; margin-right:4px;"></span>ZDR</div>
+          <div class="metric-badge-label">Zero Data Logs</div>
         </div>
       </div>
 
-      <!-- Live Code Block right in the Hero -->
-      <div class="hero-right" id="quickstart">
-        <div class="code-container">
-          <div class="code-toolbar">
-            <div class="code-tabs">
-              <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
-              <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
-            </div>
-            <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-              </svg>
-              <span id="copyFeedback">Copy</span>
-            </button>
-          </div>
-
-          <div class="code-body">
-            <pre id="code-curl"><code><span class="hl-cmd">curl</span> -X POST <span class="hl-str">"https://api.voltinfra.xyz/v1/chat/completions"</span> \
-  -H <span class="hl-hdr">"Content-Type: application/json"</span> \
-  -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
-  -d '{
-    "model": "qwen/qwen3-8b",
-    "messages": [
-      { "role": "system", "content": "You are a concise runtime assistant." },
-      { "role": "user", "content": "Ping inference endpoint." }
-    ],
-    "temperature": 0.2,
-    "max_tokens": 512,
-    "stream": true
-  }'</code></pre>
-
-            <pre id="code-python" style="display: none;"><code><span class="hl-kw">from</span> openai <span class="hl-kw">import</span> OpenAI
-
-client = OpenAI(
-    base_url=<span class="hl-str">"https://api.voltinfra.xyz/v1"</span>,
-    api_key=<span class="hl-str">"sk-volt-..."</span>
-)
-
-stream = client.chat.completions.create(
-    model=<span class="hl-str">"qwen/qwen3-8b"</span>,
-    messages=[{<span class="hl-hdr">"role"</span>: <span class="hl-hdr">"user"</span>, <span class="hl-hdr">"content"</span>: <span class="hl-hdr">"Ping node"</span>}],
-    stream=<span class="hl-kw">True</span>
-)
-
-<span class="hl-kw">for</span> chunk <span class="hl-kw">in</span> stream:
-    print(chunk.choices[0].delta.content or <span class="hl-str">""</span>, end=<span class="hl-str">""</span>, flush=<span class="hl-kw">True</span>)</code></pre>
-          </div>
+      <div class="hero-actions">
+        <a href="#quickstart" class="btn btn-primary">Explore API</a>
+        <a href="#specs" class="btn btn-secondary">View Specs</a>
+        <div class="endpoint-pill">
+          Endpoint: <code>https://api.voltinfra.xyz/v1/rerank</code>
         </div>
       </div>
     </section>
 
-    <!-- SPECS / DEPLOYMENTS -->
-    <section id="deployments" class="section">
+    <!-- Code Block Interactivo -->
+    <section id="quickstart" class="section">
       <div class="section-header">
-        <h2 class="section-title">Active Node Specifications</h2>
-        <span class="section-desc">Host Runtime: vLLM Marlin Kernel</span>
+        <h2 class="section-title">Quickstart Integration</h2>
       </div>
 
-      <div class="specs-card">
+      <div class="code-container">
+        <div class="code-toolbar">
+          <div class="code-tabs">
+            <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
+            <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
+            <button class="code-tab" id="tab-json" onclick="toggleSnippet('json')">Response (JSON)</button>
+          </div>
+          <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            <span id="copyFeedback">Copy</span>
+          </button>
+        </div>
+
+        <div class="code-body">
+          <!-- cURL snippet -->
+          <pre id="code-curl"><code><span class="hl-cmd">curl</span> -X POST <span class="hl-str">"https://api.voltinfra.xyz/v1/rerank"</span> \
+  -H <span class="hl-hdr">"Content-Type: application/json"</span> \
+  -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
+  -d '{
+    "model": "qwen/qwen3-reranker-8b",
+    "query": "What is the memory footprint of an 8B INT8 model?",
+    "documents": [
+      "An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization.",
+      "The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth.",
+      "VoltInfra provides low-latency vector reranking APIs for enterprise search."
+    ],
+    "top_n": 3,
+    "return_documents": false
+  }'</code></pre>
+
+          <!-- Python snippet -->
+          <pre id="code-python" style="display: none;"><code><span class="hl-kw">import</span> os
+<span class="hl-kw">import</span> requests
+
+url = <span class="hl-str">"https://api.voltinfra.xyz/v1/rerank"</span>
+headers = {
+    <span class="hl-hdr">"Content-Type"</span>: <span class="hl-str">"application/json"</span>,
+    <span class="hl-hdr">"Authorization"</span>: f<span class="hl-str">"Bearer {os.environ.get('VOLT_API_KEY')}"</span>
+}
+
+payload = {
+    <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
+    <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
+    <span class="hl-hdr">"documents"</span>: [
+        <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
+        <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
+        <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
+    ],
+    <span class="hl-hdr">"top_n"</span>: 3,
+    <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">False</span>
+}
+
+response = requests.post(url, json=payload, headers=headers)
+data = response.json()
+
+<span class="hl-kw">for</span> hit <span class="hl-kw">in</span> data.get(<span class="hl-str">"results"</span>, []):
+    print(f<span class="hl-str">"Doc #{hit['index']} | Relevance Score: {hit['relevance_score']:.4f}"</span>)</code></pre>
+
+          <!-- Response JSON snippet -->
+          <pre id="code-json" style="display: none;"><code>{
+  <span class="hl-hdr">"id"</span>: <span class="hl-str">"rerank-0192a8f4-b9c1-7f9e"</span>,
+  <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
+  <span class="hl-hdr">"results"</span>: [
+    { <span class="hl-hdr">"index"</span>: 0, <span class="hl-hdr">"relevance_score"</span>: 0.9842 },
+    { <span class="hl-hdr">"index"</span>: 1, <span class="hl-hdr">"relevance_score"</span>: 0.4120 },
+    { <span class="hl-hdr">"index"</span>: 2, <span class="hl-hdr">"relevance_score"</span>: 0.1583 }
+  ],
+  <span class="hl-hdr">"meta"</span>: {
+    <span class="hl-hdr">"billed_units"</span>: { <span class="hl-hdr">"input_tokens"</span>: 142 }
+  }
+}</code></pre>
+        </div>
+
+        <div class="code-statusbar">
+          <span>Protocol: HTTP POST / JSON</span>
+          <span>Response Format: Cohere / TEI / OpenRouter Compatible (/v1/rerank)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Especificaciones Técnicas (Métricas Duras) -->
+    <section id="specs" class="section">
+      <div class="section-header">
+        <h2 class="section-title">Technical Specifications</h2>
+      </div>
+
+      <div class="table-container">
         <table class="specs-table">
           <tbody>
             <tr>
-              <td class="specs-label">Model Target</td>
+              <td class="specs-label">Model ID</td>
               <td class="specs-value">
-                <strong>qwen/qwen3-8b</strong>
-                <span class="specs-tag">Primary Endpoint</span>
+                <strong>qwen/qwen3-reranker-8b</strong>
+                <span class="specs-tag">Cross-Encoder</span>
               </td>
             </tr>
             <tr>
-              <td class="specs-label">Context Allocation</td>
-              <td class="specs-value">32,768 tokens (continuous batching & dynamic KV cache)</td>
+              <td class="specs-label">Serving Engine</td>
+              <td class="specs-value">Hugging Face TEI / vLLM (Sequence Classification &amp; Scoring)</td>
             </tr>
             <tr>
-              <td class="specs-label">Quantization / Weights</td>
-              <td class="specs-value">AWQ / INT4 precision (zero perplexity degradation)</td>
+              <td class="specs-label">Quantization</td>
+              <td class="specs-value">INT8 / AWQ (NDCG Ranking Preserved, &lt;8.2 GB VRAM Footprint)</td>
             </tr>
             <tr>
-              <td class="specs-label">Output Protocol</td>
-              <td class="specs-value">HTTP/SSE Streaming (<code class="hl-hdr">text/event-stream</code> compatible)</td>
+              <td class="specs-label">Context Window</td>
+              <td class="specs-value">8,192 tokens batch limit (Up to 41k native context support)</td>
             </tr>
             <tr>
-              <td class="specs-label">Cold-Start & Keepalive</td>
-              <td class="specs-value">Persistent weights in VRAM (0ms cold start)</td>
+              <td class="specs-label">Protocol &amp; Schema</td>
+              <td class="specs-value">REST JSON — <code class="hl-hdr">POST /v1/rerank</code> (Cohere &amp; OpenRouter standard)</td>
             </tr>
             <tr>
-              <td class="specs-label">Health & Probes</td>
-              <td class="specs-value"><code class="hl-hdr">GET /health</code> &rarr; HTTP 200 OK (&lt; 5ms)</td>
+              <td class="specs-label">Scoring Throughput</td>
+              <td class="specs-value specs-highlight">&gt;2,200 tokens/second (Sustained parallel forward pass)</td>
+            </tr>
+            <tr>
+              <td class="specs-label">Batch Latency</td>
+              <td class="specs-value specs-highlight">Median &lt;350ms (p50) | &lt;600ms (p95 batch evaluation)</td>
+            </tr>
+            <tr>
+              <td class="specs-label">Pricing Model</td>
+              <td class="specs-value">$0.20 / 1M Input Tokens (Flat input rate, zero output cost)</td>
+            </tr>
+            <tr>
+              <td class="specs-label">Health &amp; Uptime</td>
+              <td class="specs-value specs-highlight">GET /health &rarr; HTTP 200 OK (&lt; 2ms) | 99.9% Availability SLA</td>
             </tr>
           </tbody>
         </table>
       </div>
     </section>
 
-    <!-- PRICING -->
-    <section id="pricing" class="section">
+    <!-- Zero Data Retention (ZDR) -->
+    <section id="zdr" class="section">
       <div class="section-header">
-        <h2 class="section-title">Transparent Token Pricing</h2>
-        <span class="section-desc">Parity matched with upstream cloud rates</span>
+        <h2 class="section-title">Data Privacy & Sovereignty</h2>
       </div>
 
-      <div class="pricing-grid">
-        <div class="pricing-card">
-          <span class="pricing-badge">Prompt Processing</span>
-          <div class="pricing-title">Input Context</div>
-          <div class="pricing-rate">$0.117 <span>/ 1M tokens</span></div>
-          <p class="pricing-desc">Dynamic prefill processing with flash attention kernels. No batch surcharge or hidden network egress fees.</p>
+      <div class="zdr-card">
+        <div class="zdr-badge">
+          <span class="status-dot"></span>
+          <span>Zero Data Retention (ZDR)</span>
         </div>
+        <p class="zdr-statement">
+          Search queries and candidate corpus passages are processed strictly in volatile GPU tensor memory. Zero logging to disk, zero IP tracking, and zero model training on customer payloads.
+        </p>
 
-        <div class="pricing-card">
-          <span class="pricing-badge">Generation</span>
-          <div class="pricing-title">Output Completion</div>
-          <div class="pricing-rate">$0.455 <span>/ 1M tokens</span></div>
-          <p class="pricing-desc">Continuous token streaming generation at full GPU clock speeds with zero queue penalty.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- ZDR / PRIVACY -->
-    <section id="privacy" class="section">
-      <div class="section-header">
-        <h2 class="section-title">Zero Data Retention (ZDR) Architecture</h2>
-        <span class="section-desc">Designed for enterprise & developer isolation</span>
-      </div>
-
-      <div class="zdr-grid">
-        <div class="zdr-box">
-          <div class="zdr-box-title">Ephemeral VRAM Only</div>
-          <div class="zdr-box-text">All request activations and KV caches exist exclusively in GPU memory. Buffers are released immediately upon socket close.</div>
-        </div>
-        <div class="zdr-box">
-          <div class="zdr-box-title">No Persistent Disk Logs</div>
-          <div class="zdr-box-text">Inference containers run with payload logging strictly disabled. No input prompts or completions ever touch storage drives.</div>
-        </div>
-        <div class="zdr-box">
-          <div class="zdr-box-title">Zero Model Training</div>
-          <div class="zdr-box-text">Customer traffic is strictly private. Data is never collected, pooled, retained, or utilized for fine-tuning or evaluation.</div>
+        <div class="zdr-grid">
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">Ephemeral Scoring Pass</div>
+            <div class="zdr-pillar-text">Query-document tokens exist strictly in GPU forward-pass activations and are flushed immediately upon returning scores.</div>
+          </div>
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">Zero Disk Storage</div>
+            <div class="zdr-pillar-text">Runtime containers operate with disk caching and payload logging permanently disabled at the engine level.</div>
+          </div>
+          <div class="zdr-pillar">
+            <div class="zdr-pillar-title">No Model Training</div>
+            <div class="zdr-pillar-text">Customer traffic is never collected, pooled, or utilized for model fine-tuning, training datasets, or benchmarking.</div>
+          </div>
         </div>
       </div>
     </section>
 
   </main>
 
-  <!-- FOOTER -->
+  <!-- ==================== 3. FOOTER ==================== -->
   <footer>
     <div class="container footer-inner">
-      <div>&copy; 2026 VoltInfra. OpenAI-Compatible Inference Node.</div>
+      <div>
+        &copy; 2026 VoltInfra. All rights reserved.
+      </div>
       <div class="footer-links">
-        <a href="#quickstart">Integration</a>
-        <a href="#pricing">Pricing</a>
+        <a href="#specs">Status (99.9%)</a>
+        <a href="#quickstart">Docs</a>
         <a href="mailto:ops@voltinfra.xyz">Contact: ops@voltinfra.xyz</a>
       </div>
     </div>
   </footer>
 
+  <!-- ==================== 4. SCRIPT ==================== -->
   <script>
     let activeSnippet = 'curl';
     const tabCurl = document.getElementById('tab-curl');
     const tabPython = document.getElementById('tab-python');
+    const tabJson = document.getElementById('tab-json');
     const codeCurl = document.getElementById('code-curl');
     const codePython = document.getElementById('code-python');
+    const codeJson = document.getElementById('code-json');
     const copyFeedback = document.getElementById('copyFeedback');
     const btnCopy = document.getElementById('btnCopy');
 
     function toggleSnippet(type) {
       activeSnippet = type;
-      if (type === 'curl') {
-        tabCurl.classList.add('active');
-        tabPython.classList.remove('active');
-        codeCurl.style.display = 'block';
-        codePython.style.display = 'none';
-      } else {
-        tabPython.classList.add('active');
-        tabCurl.classList.remove('active');
-        codePython.style.display = 'block';
-        codeCurl.style.display = 'none';
-      }
+      tabCurl.classList.toggle('active', type === 'curl');
+      tabPython.classList.toggle('active', type === 'python');
+      tabJson.classList.toggle('active', type === 'json');
+
+      codeCurl.style.display = type === 'curl' ? 'block' : 'none';
+      codePython.style.display = type === 'python' ? 'block' : 'none';
+      codeJson.style.display = type === 'json' ? 'block' : 'none';
     }
 
     function copySnippet() {
-      const textToCopy = activeSnippet === 'curl' 
-        ? codeCurl.innerText 
-        : codePython.innerText;
+      let textToCopy = '';
+      if (activeSnippet === 'curl') textToCopy = codeCurl.innerText;
+      else if (activeSnippet === 'python') textToCopy = codePython.innerText;
+      else if (activeSnippet === 'json') textToCopy = codeJson.innerText;
 
       navigator.clipboard.writeText(textToCopy).then(() => {
         copyFeedback.textContent = 'Copied!';
