@@ -624,7 +624,7 @@
         High-Throughput Cross-Encoder Runtime for Qwen3 Reranker 8B.
       </h1>
       <p class="hero-subtitle">
-        Ultra-low latency query-document scoring and reranking for enterprise RAG pipelines. Built for developer integration and OpenRouter overflow routing.
+        Ultra-low latency query-document scoring and reranking for enterprise RAG pipelines. High-availability inference node for enterprise search, vector databases, and retrieval pipelines.
       </p>
 
       <!-- Key Metric Badges -->
@@ -681,11 +681,11 @@
   -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
   -d '{
     <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
-    <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
+    <span class="hl-hdr">"query"</span>: <span class="hl-str">"How do cross-encoders improve dense vector retrieval in RAG?"</span>,
     <span class="hl-hdr">"documents"</span>: [
-      <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
-      <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
-      <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
+      <span class="hl-str">"Cross-encoders perform full joint attention across query-document pairs, capturing nuanced semantic interactions that bi-encoder cosine similarity misses."</span>,
+      <span class="hl-str">"Vector search yields high recall candidates, which are then precision-ranked by cross-encoder heads to filter false positives before LLM generation."</span>,
+      <span class="hl-str">"VoltInfra provides sub-350ms vector reranking APIs designed for high-concurrency enterprise search clusters."</span>
     ],
     <span class="hl-hdr">"top_n"</span>: 3,
     <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">false</span>
@@ -703,11 +703,11 @@ response = requests.post(
     },
     json={
         <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
-        <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
+        <span class="hl-hdr">"query"</span>: <span class="hl-str">"How do cross-encoders improve dense vector retrieval in RAG?"</span>,
         <span class="hl-hdr">"documents"</span>: [
-            <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
-            <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
-            <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
+            <span class="hl-str">"Cross-encoders perform full joint attention across query-document pairs, capturing nuanced semantic interactions that bi-encoder cosine similarity misses."</span>,
+            <span class="hl-str">"Vector search yields high recall candidates, which are then precision-ranked by cross-encoder heads to filter false positives before LLM generation."</span>,
+            <span class="hl-str">"VoltInfra provides sub-350ms vector reranking APIs designed for high-concurrency enterprise search clusters."</span>
         ],
         <span class="hl-hdr">"top_n"</span>: 3,
         <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">False</span>
@@ -744,15 +744,15 @@ results = response.json()
             </tr>
             <tr>
               <td class="specs-label">Serving Engine</td>
-              <td class="specs-value">Hugging Face TEI / vLLM (Sequence Classification &amp; Scoring)</td>
+              <td class="specs-value">High-Performance Tensor Runtime</td>
             </tr>
             <tr>
               <td class="specs-label">Quantization</td>
-              <td class="specs-value">INT8 / AWQ (NDCG Lossless Ranking, &lt;8.2 GB VRAM Footprint)</td>
+              <td class="specs-value">INT8 / AWQ (Optimized NDCG Ranking Precision)</td>
             </tr>
             <tr>
               <td class="specs-label">Context Window</td>
-              <td class="specs-value">8,192 tokens batch limit (Up to 41,000 tokens native support)</td>
+              <td class="specs-value">8,192 tokens (Dense multi-document batch window)</td>
             </tr>
             <tr>
               <td class="specs-label">Protocol &amp; Schema</td>
@@ -772,7 +772,7 @@ results = response.json()
             </tr>
             <tr>
               <td class="specs-label">Health &amp; Uptime</td>
-              <td class="specs-value specs-highlight">GET /health &rarr; HTTP 200 OK (&lt; 2ms) | 99.9% Availability SLA</td>
+              <td class="specs-value specs-highlight">GET /health &rarr; HTTP 200 OK (&lt; 2ms) | High Availability &bull; Redundant Routing</td>
             </tr>
           </tbody>
         </table>
@@ -820,7 +820,7 @@ results = response.json()
         &copy; 2026 VoltInfra. All rights reserved.
       </div>
       <div class="footer-links">
-        <a href="#specs">Status (99.9%)</a>
+        <a href="#specs">Status (Operational)</a>
         <a href="#quickstart">Docs</a>
         <a href="mailto:ops@voltinfra.xyz">Contact: ops@voltinfra.xyz</a>
       </div>
