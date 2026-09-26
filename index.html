@@ -189,50 +189,48 @@
       line-height: 1.6;
       color: var(--text-muted);
       max-width: 640px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       font-weight: 400;
     }
 
-    .hero-metrics {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-      gap: 12px;
-      margin-bottom: 28px;
-      max-width: 680px;
+    .hero-status {
+      margin-bottom: 18px;
     }
 
-    .metric-badge-card {
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .metric-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 11px;
+      border-radius: 4px;
       background-color: var(--surface);
       border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 3px;
-      transition: border-color 0.15s ease;
+      font-family: var(--font-mono);
+      font-size: 11.5px;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
     }
 
-    .metric-badge-card:hover {
+    .metric-chip:hover {
       border-color: var(--border-hover);
+      background-color: var(--surface-subtle);
     }
 
-    .metric-badge-val {
-      font-family: var(--font-mono);
-      font-size: 16px;
-      font-weight: 700;
+    .metric-chip-value {
       color: var(--emerald);
-      letter-spacing: -0.02em;
-      display: flex;
-      align-items: center;
-      gap: 6px;
+      font-weight: 600;
     }
 
-    .metric-badge-label {
-      font-family: var(--font-mono);
-      font-size: 11px;
+    .metric-chip-label {
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
+      font-size: 11px;
     }
 
     .hero-actions {
@@ -630,24 +628,25 @@
       </p>
 
       <!-- Key Metric Badges -->
-      <div class="hero-metrics">
-        <div class="metric-badge-card">
-          <div class="metric-badge-val">&gt;2,200 tok/s</div>
-          <div class="metric-badge-label">Sustained Scoring Throughput</div>
+      <div class="hero-badges">
+        <div class="metric-chip">
+          <span class="metric-chip-value">&gt;2,200 tok/s</span>
+          <span class="metric-chip-label">Sustained Scoring Throughput</span>
         </div>
-        <div class="metric-badge-card">
-          <div class="metric-badge-val">&lt;350ms</div>
-          <div class="metric-badge-label">Median Batch Latency</div>
+        <div class="metric-chip">
+          <span class="metric-chip-value">&lt;350ms</span>
+          <span class="metric-chip-label">Median Batch Latency</span>
         </div>
-        <div class="metric-badge-card">
-          <div class="metric-badge-val"><span class="status-dot" style="display:inline-block; margin-right:4px;"></span>ZDR</div>
-          <div class="metric-badge-label">Zero Data Logs</div>
+        <div class="metric-chip">
+          <span class="status-dot"></span>
+          <span class="metric-chip-value">ZDR</span>
+          <span class="metric-chip-label">Zero Data Logs</span>
         </div>
       </div>
 
       <div class="hero-actions">
         <a href="#quickstart" class="btn btn-primary">Explore API</a>
-        <a href="#specs" class="btn btn-secondary">View Specs</a>
+        <a href="#specs" class="btn btn-secondary">Runtime Specs</a>
         <div class="endpoint-pill">
           Endpoint: <code>https://api.voltinfra.xyz/v1/rerank</code>
         </div>
@@ -665,7 +664,6 @@
           <div class="code-tabs">
             <button class="code-tab active" id="tab-curl" onclick="toggleSnippet('curl')">cURL</button>
             <button class="code-tab" id="tab-python" onclick="toggleSnippet('python')">Python</button>
-            <button class="code-tab" id="tab-json" onclick="toggleSnippet('json')">Response (JSON)</button>
           </div>
           <button class="btn-copy" id="btnCopy" onclick="copySnippet()">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -682,62 +680,47 @@
   -H <span class="hl-hdr">"Content-Type: application/json"</span> \
   -H <span class="hl-hdr">"Authorization: Bearer $VOLT_API_KEY"</span> \
   -d '{
-    "model": "qwen/qwen3-reranker-8b",
-    "query": "What is the memory footprint of an 8B INT8 model?",
-    "documents": [
-      "An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization.",
-      "The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth.",
-      "VoltInfra provides low-latency vector reranking APIs for enterprise search."
+    <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
+    <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
+    <span class="hl-hdr">"documents"</span>: [
+      <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
+      <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
+      <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
     ],
-    "top_n": 3,
-    "return_documents": false
+    <span class="hl-hdr">"top_n"</span>: 3,
+    <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">false</span>
   }'</code></pre>
 
           <!-- Python snippet -->
           <pre id="code-python" style="display: none;"><code><span class="hl-kw">import</span> os
 <span class="hl-kw">import</span> requests
 
-url = <span class="hl-str">"https://api.voltinfra.xyz/v1/rerank"</span>
-headers = {
-    <span class="hl-hdr">"Content-Type"</span>: <span class="hl-str">"application/json"</span>,
-    <span class="hl-hdr">"Authorization"</span>: f<span class="hl-str">"Bearer {os.environ.get('VOLT_API_KEY')}"</span>
-}
+response = requests.post(
+    <span class="hl-str">"https://api.voltinfra.xyz/v1/rerank"</span>,
+    headers={
+        <span class="hl-hdr">"Content-Type"</span>: <span class="hl-str">"application/json"</span>,
+        <span class="hl-hdr">"Authorization"</span>: f<span class="hl-str">"Bearer {os.environ.get('VOLT_API_KEY')}"</span>
+    },
+    json={
+        <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
+        <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
+        <span class="hl-hdr">"documents"</span>: [
+            <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
+            <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
+            <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
+        ],
+        <span class="hl-hdr">"top_n"</span>: 3,
+        <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">False</span>
+    }
+)
 
-payload = {
-    <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
-    <span class="hl-hdr">"query"</span>: <span class="hl-str">"What is the memory footprint of an 8B INT8 model?"</span>,
-    <span class="hl-hdr">"documents"</span>: [
-        <span class="hl-str">"An 8B parameter model requires approximately 8.2 GB of VRAM in INT8 quantization."</span>,
-        <span class="hl-str">"The RTX 3060 features 12 GB of GDDR6 memory with 360 GB/s bandwidth."</span>,
-        <span class="hl-str">"VoltInfra provides low-latency vector reranking APIs for enterprise search."</span>
-    ],
-    <span class="hl-hdr">"top_n"</span>: 3,
-    <span class="hl-hdr">"return_documents"</span>: <span class="hl-kw">False</span>
-}
-
-response = requests.post(url, json=payload, headers=headers)
-data = response.json()
-
-<span class="hl-kw">for</span> hit <span class="hl-kw">in</span> data.get(<span class="hl-str">"results"</span>, []):
-    print(f<span class="hl-str">"Doc #{hit['index']} | Relevance Score: {hit['relevance_score']:.4f}"</span>)</code></pre>
-
-          <!-- Response JSON snippet -->
-          <pre id="code-json" style="display: none;"><code>{
-  <span class="hl-hdr">"id"</span>: <span class="hl-str">"rerank-0192a8f4-b9c1-7f9e"</span>,
-  <span class="hl-hdr">"model"</span>: <span class="hl-str">"qwen/qwen3-reranker-8b"</span>,
-  <span class="hl-hdr">"results"</span>: [
-    { <span class="hl-hdr">"index"</span>: 0, <span class="hl-hdr">"relevance_score"</span>: 0.9842 },
-    { <span class="hl-hdr">"index"</span>: 1, <span class="hl-hdr">"relevance_score"</span>: 0.4120 },
-    { <span class="hl-hdr">"index"</span>: 2, <span class="hl-hdr">"relevance_score"</span>: 0.1583 }
-  ],
-  <span class="hl-hdr">"meta"</span>: {
-    <span class="hl-hdr">"billed_units"</span>: { <span class="hl-hdr">"input_tokens"</span>: 142 }
-  }
-}</code></pre>
+results = response.json()
+<span class="hl-kw">for</span> hit <span class="hl-kw">in</span> results.get(<span class="hl-str">"results"</span>, []):
+    print(f<span class="hl-str">"Doc #{hit['index']} | Score: {hit['relevance_score']:.4f}"</span>)</code></pre>
         </div>
 
         <div class="code-statusbar">
-          <span>Protocol: HTTP POST / JSON</span>
+          <span>Protocol: HTTP POST (application/json)</span>
           <span>Response Format: Cohere / TEI / OpenRouter Compatible (/v1/rerank)</span>
         </div>
       </div>
@@ -756,7 +739,7 @@ data = response.json()
               <td class="specs-label">Model ID</td>
               <td class="specs-value">
                 <strong>qwen/qwen3-reranker-8b</strong>
-                <span class="specs-tag">Cross-Encoder</span>
+                <span class="specs-tag">cross-encoder</span>
               </td>
             </tr>
             <tr>
@@ -765,15 +748,15 @@ data = response.json()
             </tr>
             <tr>
               <td class="specs-label">Quantization</td>
-              <td class="specs-value">INT8 / AWQ (NDCG Ranking Preserved, &lt;8.2 GB VRAM Footprint)</td>
+              <td class="specs-value">INT8 / AWQ (NDCG Lossless Ranking, &lt;8.2 GB VRAM Footprint)</td>
             </tr>
             <tr>
               <td class="specs-label">Context Window</td>
-              <td class="specs-value">8,192 tokens batch limit (Up to 41k native context support)</td>
+              <td class="specs-value">8,192 tokens batch limit (Up to 41,000 tokens native support)</td>
             </tr>
             <tr>
               <td class="specs-label">Protocol &amp; Schema</td>
-              <td class="specs-value">REST JSON — <code class="hl-hdr">POST /v1/rerank</code> (Cohere &amp; OpenRouter standard)</td>
+              <td class="specs-value">REST API (<code class="hl-hdr">POST /v1/rerank</code> &bull; Cohere / TEI standard)</td>
             </tr>
             <tr>
               <td class="specs-label">Scoring Throughput</td>
@@ -781,7 +764,7 @@ data = response.json()
             </tr>
             <tr>
               <td class="specs-label">Batch Latency</td>
-              <td class="specs-value specs-highlight">Median &lt;350ms (p50) | &lt;600ms (p95 batch evaluation)</td>
+              <td class="specs-value specs-highlight">Median &lt;350ms | p95 &lt;600ms (edge inclusive)</td>
             </tr>
             <tr>
               <td class="specs-label">Pricing Model</td>
@@ -849,10 +832,8 @@ data = response.json()
     let activeSnippet = 'curl';
     const tabCurl = document.getElementById('tab-curl');
     const tabPython = document.getElementById('tab-python');
-    const tabJson = document.getElementById('tab-json');
     const codeCurl = document.getElementById('code-curl');
     const codePython = document.getElementById('code-python');
-    const codeJson = document.getElementById('code-json');
     const copyFeedback = document.getElementById('copyFeedback');
     const btnCopy = document.getElementById('btnCopy');
 
@@ -860,18 +841,15 @@ data = response.json()
       activeSnippet = type;
       tabCurl.classList.toggle('active', type === 'curl');
       tabPython.classList.toggle('active', type === 'python');
-      tabJson.classList.toggle('active', type === 'json');
 
       codeCurl.style.display = type === 'curl' ? 'block' : 'none';
       codePython.style.display = type === 'python' ? 'block' : 'none';
-      codeJson.style.display = type === 'json' ? 'block' : 'none';
     }
 
     function copySnippet() {
-      let textToCopy = '';
-      if (activeSnippet === 'curl') textToCopy = codeCurl.innerText;
-      else if (activeSnippet === 'python') textToCopy = codePython.innerText;
-      else if (activeSnippet === 'json') textToCopy = codeJson.innerText;
+      const textToCopy = activeSnippet === 'curl' 
+        ? codeCurl.innerText 
+        : codePython.innerText;
 
       navigator.clipboard.writeText(textToCopy).then(() => {
         copyFeedback.textContent = 'Copied!';
